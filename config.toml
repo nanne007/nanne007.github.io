@@ -1,3 +1,51 @@
-baseURL = "http://example.org/"
 languageCode = "en-us"
-title = "My New Hugo Site"
+title = "Give me five"
+theme = "oaktrough"
+
+# Allow Hugo to munge, e.g., "Programming Stuff" into "programming-stuff"
+preserveTaxonomyNames = false
+
+# Allow Hugo to rewrite URLs so they work on IPFS as well as locally and via URL
+relativeURLs = true
+
+# Highlighting
+pygmentsStyle = "fruity"
+pygmentsUseClassic = false
+pygmentsCodefences = true
+
+[taxonomies]
+  category = "categories"
+
+[permalinks]
+    post = "/post/:slug"
+    tutorial = "/tutorial/:slug"
+
+[[menu.main]]
+    name = "主页"
+    url = "/"
+    weight = 1
+
+[[menu.main]]
+    name = "文章"
+    url = "/posts/"
+    weight = 1
+
+[[menu.main]]
+    name = "笔记"
+    url = "/notes/"
+    weight = 2
+
+[[menu.main]]
+    name = "项目"
+    url = "/projects/"
+    weight = 3
+
+[[menu.feed]]
+    name = "订阅"
+    url = "/index.xml"
+    weight = 4
+
+[params]
+    description = "caojiafeng's personal website"
+    author = "Jiafeng Cao"
+    MetaDescription = "caojiafeng's personal website, regarding programming."
