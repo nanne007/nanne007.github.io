@@ -18,7 +18,7 @@
           <section>
               <h3><a href="{{ .URL }}">{{ .Title }}</a>
               {{ with .Date }}
-                written {{ .Format "Jan 02, 2006" }}
+                written {{ .Format "2006, 01/02" }}
                 {{ end }} </h3>
               {{ with .Description }}
               <p>{{ . }}</p>
