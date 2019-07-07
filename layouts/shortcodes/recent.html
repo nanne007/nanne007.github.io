@@ -1,0 +1,6 @@
+<ul class="postsList">
+    {{- range first 5 .Site.RegularPages.ByDate.Reverse -}}
+    <li> <a href="{{.RelPermalink}}">{{.Title}}</a> {{ .Date.Format "2006/01/02" }} </li>
+    {{- end -}}
+</ul>
+
