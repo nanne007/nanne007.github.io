@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>/notes/memory_order/</loc>
+    <lastmod>2019-03-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/</loc>
+    <lastmod>2019-03-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/</loc>
+    <lastmod>2019-03-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/</loc>
+    <lastmod>2018-12-16T21:33:22+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/how-to-monitor-tidb-slow-query/</loc>
+    <lastmod>2018-12-16T21:33:22+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/raft-revisited/</loc>
+    <lastmod>2018-12-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/about_write_snapshot_isolation/</loc>
+    <lastmod>2018-12-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/about_isolation/</loc>
+    <lastmod>2018-09-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/goodbye-2017/</loc>
+    <lastmod>2018-01-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/job-finding/</loc>
+    <lastmod>2015-09-21T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/about-ycombinator/</loc>
+    <lastmod>2014-10-14T22:59:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+</urlset>

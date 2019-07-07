@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>主页 on Give me five</title>
+    <link>/</link>
+    <description>Recent content in 主页 on Give me five</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 14 Mar 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>mermory barrier 阅读笔记</title>
+      <link>/notes/memory_order/</link>
+      <pubDate>Thu, 14 Mar 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/memory_order/</guid>
+      <description>https://mechanical-sympathy.blogspot.com/2011/07/memory-barriersfences.html 的阅读笔记。
+memory barrier 保证 barrier 两边的指令执行结果可以以程序顺序的方式被其他 CPU 观察到。
+store barrier:
+ &amp;lsquo;sfence&amp;rsquo; instruction on x86, waits for all store instructions prior to the barrier to be written from the store buffer to the L1 cache for the CPU on which it is issued. All previous updates to memory that happened before the barrier are now visible.
+ visible 只是说 数据写到 cache 了，但还不能保证其他 cpu 的 cache 也是最新的。
+load barrier:</description>
+    </item>
+    
+    <item>
+      <title>TiDB 慢 SQL 收集和监控</title>
+      <link>/posts/how-to-monitor-tidb-slow-query/</link>
+      <pubDate>Sun, 16 Dec 2018 21:33:22 +0000</pubDate>
+      
+      <guid>/posts/how-to-monitor-tidb-slow-query/</guid>
+      <description>本文介绍了一种如何收集并监控 TiDB 慢 SQL 的方法。 首先给出了收集的整体流程图。 然后具体说明了每一步涉及的主要功能以及实现方式。 最后给出了几个应该关注的监控点。
+流程图 TiDB 将慢 SQL 日志输出到文件中；filebeat 收集这些日志，发送到 Kakfa； 然后通过一个解析慢 SQL 的 consumer 程序，将解析后的结构数据，写入到 InfluxDB； 最终用 Grafana 来展示和监控慢 SQL。
+TiDB 慢日志配置 TiDB 有两个选项用来配置慢 SQL 日志：
+# Stores slow query log into separated files. slow-query-file = &amp;#34;&amp;#34; # Queries with execution time greater than this value will be logged. (Milliseconds) slow-threshold = 300 也可以直接通过命令行参数 `&amp;ndash;log-slow-query** 指定慢SQL 日志文件位置，优先级比配置文件高。
+默认是不配置的，慢 SQL 日志会和其他日志一起输出。
+配置完成之后，慢 SQL 日志会记录到单独的日志文件中，比如 tidb_slow_query.log。</description>
+    </item>
+    
+    <item>
+      <title>重读 Raft 论文</title>
+      <link>/notes/raft-revisited/</link>
+      <pubDate>Mon, 10 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/raft-revisited/</guid>
+      <description>安全 如果一台机器应用了一条日志，那么其他的机器就无法应用具有相同ID但不同命令的日志。
+Election Safety:
+ At most one leader can be elected in a given term. §3.4
+ Leader Append-Only:
+ A leader never overwrites or deletes entries in its log; it only appends new entries. §3.5
+ Log Matching:
+ If two logs contain an entry with the same index and term, then the logs are identical in all entries up through the given index. §3.5
+ Leader Completeness:</description>
+    </item>
+    
+    <item>
+      <title>Paper: A critique of snapshot isolation 笔记</title>
+      <link>/notes/about_write_snapshot_isolation/</link>
+      <pubDate>Tue, 04 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/about_write_snapshot_isolation/</guid>
+      <description>Section 2  both write to row r 时间重叠：si &amp;lt; cj, ci &amp;gt; sj  介绍了 SI 的两种实现方式： - 基于锁的实现，拿 percolator 举例。 - 无锁的实现。没细看，跳过了。
+Section 3: Serializablility 首先说明了 SI 的问题：
+ 避免 Write-Write 冲突不足够实现 Serializablility。有 write skew 的问题。 同时也不是实现 Serializablility 的必要条件。禁止了一些事实上是 Serializable 的操作。  Section 4: Read-Write vs Write-Write 从 read-snapshot isolation 出发定义了 write-snapshot isolation：
+ txn2 修改了 txn1 读的数据。 s1 &amp;lt; c2, c1 &amp;gt; c2  得出结论： - 避免 Read-Write 冲突可以实现 Serializablility。 - 但同样也禁止了一些是 Serializable 的操作。</description>
+    </item>
+    
+    <item>
+      <title>Paper: A critique of ANSI SQL isolation levels 笔记</title>
+      <link>/notes/about_isolation/</link>
+      <pubDate>Mon, 10 Sep 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/about_isolation/</guid>
+      <description>P1(Dirty Read): 脏读 w1[x] ... r2[x] ...   txn1 修改了一行数据。（未 commit 之前） txn2 读到修改的值。（未commit 之前）  P2(Fuzz or Non-repeatable Read): 不可重读 r1[x] ... w2[x] ... c2 ... r1[x] ... c1   txn1 读了一个数据， txn2 修改这个数据，并 commit txn1 重新读这个数据，读到新的值。  P3(Phantom): 幻读 r1[P] ... w2[y in P] ... c2 ... r1[P] ... c1   txn1 读了一段满足某个 condition 的数据， txn2 修改了一条数据，使之满足或者不满足这个 condition（比如说删掉了一条满足 condition 的数据，新增了一条满足 condition 数据），并 commit。 txn1 重新读满足这个 condition 的数据，返回数据变化。  P2 可以看做是 P3 的特殊 case。</description>
+    </item>
+    
+    <item>
+      <title>再见，2017</title>
+      <link>/posts/goodbye-2017/</link>
+      <pubDate>Mon, 01 Jan 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/goodbye-2017/</guid>
+      <description> 以前度过一年的时候，好像很少想去写总结，今年倒是有很强的意愿。 可能是因为工作第二年，感触更深了的缘故。 梳理梳理也是好的，老了，时间总是过的很快，不回想回想，总感觉老的更快了。
+离开北京 我是3月下旬和小boss沟通辞职的事情的。 干的实在不是很开心，所以想尽快的离开目前的环境。 去杭州找了两次工作，面了几家公司，说实话杭州的技术氛围比北京还是差了不少。 因为不想多面，所以没多久就选择来了挖财。 虽然从薪水上和技术上，比之前司，没有什么优势，但不失为一个好去处。
+4月份从北京辞职，约了5月初来杭州入职，期间的20多天，把研究生时期欠下的学车债给还了。 报的东方时尚速成班，每天上下午各几个小时，第一次练完下车后，直接蹲到了地上。 学车还是累的。虽然拿了驾照，但上路还是心有害怕的。 今年的目标之一就是克服障碍，成为一个合格的司机。
+新环境 来杭州的前几个星期，暂时寄宿在女朋友家里。 花了一两周时间找房子，最后和一个在豆瓣上认识的朋友一起合租了个三居室，其中一居之后租给了别人。
+房租，杭州还是便宜的，之前在北京还不觉得。说起吃饭上，杭州的餐馆种类不如北京多，性价比也不如，这一点倒是有些不习惯。
+新公司做的事情，有些出乎意料。
+最开始想做高性能高并发的 web 服务，后来做的确是 phoenix、 hbase 相关的事情。 慢慢的入了数据库的坑。不过这也是我之前就感兴趣的领域，干起来挺开心。
+今年的计划是保证现有业务稳定的情况下，推进 newsql 的落地。还是蛮期待能得到 boss 更多的支持。尚不明确的是今年公司的具体规划会不会导致我的这个想法破产。
+自身变化 生活上的话，确实是感觉自己老了，人变得憋闷了。这一点确是不好。
+游泳一直还坚持着，没有发福的厉害。庆幸旁边有一些喜欢游泳的同事。 今年要加强游泳的频率，同时拓展其他运动，比如说篮球。
+写一写今年对自己的要求吧（除了上面的一些）：
+ 和女朋友在杭州买房，争取上半年完成。 工作上能升一级，加薪 20%。 看完 tidb 的代码，成为 contributor。 去一趟湾湾，或者日本，或者泰国。 了解一些区块链的知识。  </description>
+    </item>
+    
+    <item>
+      <title>毕业季找工作</title>
+      <link>/notes/job-finding/</link>
+      <pubDate>Mon, 21 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/job-finding/</guid>
+      <description> 找工作 最近大半个月的经历 阅兵假回来北京之后，一头扎进了找工作的大军之中。 第一天收到了腾讯的笔试邀请，当时没怎么重视，开考半个多小时才开始做题目。 一看题目傻眼了，这些大学计算机知识点，大部分都忘的一干二净，尤其是那些坑人的 C++ 技术点。 当时没放在心上，随便做了下，现在想来，即使重视了，也不一定做的好。 学渣呀。
+期间陆陆续续投了大概 10 多家互联网公司，像网易，美团，今日头条，滴滴等等。 做了三四次笔试，题目差不多，基本全挂。
+有尝试去了解一些创业团队，在知乎、哪上班、简寻上面留有简历。 面谈了几家公司，聊的比较开心。
+今天电面了云巴，被面试官批评基础知识不牢固。 这里的基础知识，指的是大学期间的一些基础课程，如操作系统，计算机网络等等。 事实确实是这样，这些知识的系统性学习是在大三期间，之后没有深入研习过，三四年过去了，怎么可能扎实。
+大概就是这样。当然其中省略了很多，比如说和几家创业团队的面聊，这里暂且不表。
+有什么发现 发现倒是不少。
+ 大公司的校招处处是坑。 大部分所谓的技术型公司都是挂羊头买狗肉。 这个世界的某些角落，是有那么一撮人在做着从 0 到 1 的事情。至少我遇见了两个。 90 后还是和 90 后聊的最开心呀！ 找工作真的像相亲一样，一定要找臭味相投的那种。装逼高冷的就算了吧！  想要什么 就我个人而言，时间是最值钱的东西，任何能提高效率的都是我想追求的。 而一个优秀的 team 是最能接近这个目标的。 当然，生活在世，还少不了钱！
+给自己的一些建议  戒骄戒躁。 保持健身。 多看书，多思考。 多看代码，多实践。 爱自己，爱女票。  </description>
+    </item>
+    
+    <item>
+      <title>关于 Y Combinator</title>
+      <link>/posts/about-ycombinator/</link>
+      <pubDate>Tue, 14 Oct 2014 22:59:26 +0000</pubDate>
+      
+      <guid>/posts/about-ycombinator/</guid>
+      <description>我对 Y Combinator 的兴趣，源自于王垠的一篇讲丘奇和图灵的文章，还有刘未鹏的 康托尔、哥德尔、图灵，永恒的金色对角线。
+当然，网络上有很多关于 Y Combinator 的东西，个人比较推荐：
+ explanation from Mike Vanier，写的十分通俗易懂。 PLLC 这本书也有详细的推导过程。（推荐前几章，我只看了前几章&amp;hellip;）  Y Combinator for Lazy Evaluation  关于 Evaluation 的概念，参见 wiki - Evaluation Strategy
+ (define Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x)))))) ; for a given function f (which is a non-recursive function like almost-factorial), ; the corresponding recursive function can be obtained ; first by computing (lambda (x) (f (x x))), ; and then applying this lambda expression to itself.</description>
+    </item>
+    
+  </channel>
+</rss>

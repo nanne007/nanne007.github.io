@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Paper: A critique of snapshot isolation 笔记 | Give me five</title>
+    <meta name="DC.Title" content="Paper: A critique of snapshot isolation 笔记">
+  
+
+  
+    <meta name="DC.Date" content="2018/12/04">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="write-si 的起源">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/about_write_snapshot_isolation/">
+  
+
+  
+    <meta name="keywords" content="database,snapshot-isolation,serializable,paper,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Paper: A critique of snapshot isolation 笔记</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2018/12/04 
+    
+
+    
+</header>
+
+<article>
+
+
+<h3 id="section-2">Section 2</h3>
+
+<ul>
+<li>both write to row r</li>
+<li>时间重叠：si &lt; cj, ci &gt; sj</li>
+</ul>
+
+<p>介绍了 SI 的两种实现方式：
+- 基于锁的实现，拿 percolator 举例。
+- 无锁的实现。没细看，跳过了。</p>
+
+<h3 id="section-3-serializablility">Section 3: Serializablility</h3>
+
+<p>首先说明了 SI 的问题：</p>
+
+<ul>
+<li>避免 Write-Write 冲突不足够实现 Serializablility。有 write skew 的问题。</li>
+<li>同时也不是实现 Serializablility 的必要条件。禁止了一些事实上是 Serializable 的操作。</li>
+</ul>
+
+<h4 id="section-4-read-write-vs-write-write">Section 4: Read-Write vs Write-Write</h4>
+
+<p>从 read-snapshot isolation 出发定义了 write-snapshot isolation：</p>
+
+<ul>
+<li>txn2 修改了 txn1 读的数据。</li>
+<li>s1 &lt; c2, c1 &gt; c2</li>
+</ul>
+
+<p>得出结论：
+- 避免 Read-Write 冲突可以实现 Serializablility。
+- 但同样也禁止了一些是 Serializable 的操作。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

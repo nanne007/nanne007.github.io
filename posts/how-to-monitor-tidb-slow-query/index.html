@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>TiDB 慢 SQL 收集和监控 | Give me five</title>
+    <meta name="DC.Title" content="TiDB 慢 SQL 收集和监控">
+  
+
+  
+    <meta name="DC.Date" content="2018/12/16">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="介绍了一种如何收集并监控 TiDB 慢 SQL 的方法。">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/how-to-monitor-tidb-slow-query/">
+  
+
+  
+    <meta name="keywords" content="tidb,monitor,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>TiDB 慢 SQL 收集和监控</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2018/12/16 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>本文介绍了一种如何收集并监控 TiDB 慢 SQL 的方法。
+首先给出了收集的整体流程图。
+然后具体说明了每一步涉及的主要功能以及实现方式。
+最后给出了几个应该关注的监控点。</p>
+
+<h3 id="流程图">流程图</h3>
+
+<p><img src="https://user-images.githubusercontent.com/1456096/50014598-5a358380-ffff-11e8-9775-825ac37de17b.png" alt="arch" /></p>
+
+<p>TiDB 将慢 SQL 日志输出到文件中；filebeat 收集这些日志，发送到 Kakfa；
+然后通过一个解析慢 SQL 的 consumer 程序，将解析后的结构数据，写入到 InfluxDB；
+最终用 Grafana 来展示和监控慢 SQL。</p>
+
+<h3 id="tidb-慢日志配置">TiDB 慢日志配置</h3>
+
+<p>TiDB 有两个选项用来配置慢 SQL 日志：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml"><span style="color:#080;background-color:#0f140f;font-style:italic"># Stores slow query log into separated files.</span>
+slow-query-file = <span style="color:#0086d2">&#34;&#34;</span>
+
+<span style="color:#080;background-color:#0f140f;font-style:italic"># Queries with execution time greater than this value will be logged. (Milliseconds)</span>
+slow-threshold = <span style="color:#0086f7;font-weight:bold">300</span></code></pre></div>
+<p>也可以直接通过命令行参数 `&ndash;log-slow-query** 指定慢SQL 日志文件位置，优先级比配置文件高。</p>
+
+<p><strong>默认是不配置的，慢 SQL 日志会和其他日志一起输出。</strong></p>
+
+<p>配置完成之后，慢 SQL 日志会记录到单独的日志文件中，比如 <code>tidb_slow_query.log</code>。</p>
+
+<h3 id="filebeat-收集">Filebeat 收集</h3>
+
+<p>然后，为每个 TiDB Server 起一个 <a href="https://github.com/elastic/beats/tree/master/filebeat">filebeat</a>，用来收集该 TiDB Server 的慢 SQL 日志。</p>
+
+<blockquote>
+<p>filebeat 是用 Golang 编写的一个日志收集工具，和 logstash 相比，小巧方便易用。</p>
+</blockquote>
+
+<p>这里需要配置 filebeat 的 input 类型为 <code>log</code>，路径是前述慢 SQL 日志文件的路径。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">filebeat.inputs:<span style="color:#888">
+</span><span style="color:#888">  </span>-<span style="color:#888"> </span>type:<span style="color:#888"> </span>log<span style="color:#888">
+</span><span style="color:#888">    </span>enabled:<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">true</span><span style="color:#888">
+</span><span style="color:#888">    </span>fields:<span style="color:#888">
+</span><span style="color:#888">      </span>log_type:<span style="color:#888"> </span>slow_query<span style="color:#888">
+</span><span style="color:#888">    </span>paths:<span style="color:#888">
+</span><span style="color:#888">      </span><span style="color:#080;background-color:#0f140f;font-style:italic"># change the path to your tidb log path</span><span style="color:#888">
+</span><span style="color:#888">      </span>-<span style="color:#888"> </span>/data/tidb/log/tidb_slow_query<span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">*.log</span><span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">    </span>fields_under_root:<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">true</span><span style="color:#888">
+</span><span style="color:#888">    </span>multiline.pattern:<span style="color:#888"> </span><span style="color:#0086d2">&#39;^\d{4}/\d{2}/\d{2}&#39;</span><span style="color:#888">
+</span><span style="color:#888">    </span>multiline.negate:<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">true</span><span style="color:#888">
+</span><span style="color:#888">    </span>multiline.match:<span style="color:#888"> </span>after<span style="color:#888">
+</span><span style="color:#888">    </span>multiline.max_lines:<span style="color:#888"> </span><span style="color:#0086f7;font-weight:bold">100</span><span style="color:#888">
+</span><span style="color:#888">    </span>multiline.timeout:<span style="color:#888"> </span>2s<span style="color:#888">
+</span><span style="color:#888">    </span>tail_files:<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">true</span><span style="color:#888">
+</span><span style="color:#888">    </span>max_backoff:<span style="color:#888"> </span>5s</code></pre></div>
+<p>output 配置成 kafka 的地址（发送到 kafka 是为了进一步解析）:</p>
+
+<blockquote>
+<p>和 logstash 不同，filebeat 没有太多的解析功能。</p>
+</blockquote>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">output.kafka:<span style="color:#888">
+</span><span style="color:#888">  </span>hosts:<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#080;background-color:#0f140f;font-style:italic"># change the host:ip to your kafka address</span><span style="color:#888">
+</span><span style="color:#888">    </span>-<span style="color:#888"> </span><span style="color:#0086f7;font-weight:bold">172.16</span>.<span style="color:#0086f7;font-weight:bold">1.1</span>:<span style="color:#0086f7;font-weight:bold">9092</span><span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">  </span>topics:<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#080;background-color:#0f140f;font-style:italic"># change the topic name as you wish</span><span style="color:#888">
+</span><span style="color:#888">    </span>-<span style="color:#888"> </span>topic:<span style="color:#888"> </span>tidb.logs.slow_query<span style="color:#888">
+</span><span style="color:#888">      </span>when:<span style="color:#888">
+</span><span style="color:#888">        </span>equals:<span style="color:#888">
+</span><span style="color:#888">          </span>log_type:<span style="color:#888"> </span>slow_query<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">  </span>required_acks:<span style="color:#888"> </span><span style="color:#0086f7;font-weight:bold">1</span><span style="color:#888">
+</span><span style="color:#888">  </span>compression:<span style="color:#888"> </span>gzip<span style="color:#888">
+</span><span style="color:#888">  </span>worker:<span style="color:#888"> </span><span style="color:#0086f7;font-weight:bold">2</span><span style="color:#888">
+</span><span style="color:#888">  </span>client_id:<span style="color:#888"> </span>tidb_log_beats</code></pre></div>
+<h3 id="日志格式解析">日志格式解析</h3>
+
+<p>从 kafka 里消费慢 SQL 日志数据，利用正则表达式：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-regexp" data-lang="regexp">(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) .+? \[SLOW_QUERY\] (?:\[INTERNAL\] )?cost_time:(\S+)(.+?)succ:(\S+?) con:(\d+?) user:(.*?)(?:@(.*?))? txn_start_ts:(\d+?) database:(\S*?) (?:table_ids:\[(.*?)\],)?(?:index_ids:\[(.*?)\],)?sql:((?:.|\s)+)</code></pre></div>
+<p>解析出里面的字段：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">[
+  <span style="color:#0086d2">&#34;cost_time&#34;</span>,
+  <span style="color:#0086d2">&#34;succ&#34;</span>,
+  <span style="color:#0086d2">&#34;con&#34;</span>,
+  <span style="color:#0086d2">&#34;remote_user&#34;</span>,
+  <span style="color:#0086d2">&#34;remote_ip&#34;</span>,
+  <span style="color:#0086d2">&#34;txn_start_ts&#34;</span>,
+  <span style="color:#0086d2">&#34;database&#34;</span>,
+  <span style="color:#0086d2">&#34;table_ids&#34;</span>,
+  <span style="color:#0086d2">&#34;index_ids&#34;</span>,
+  <span style="color:#0086d2">&#34;sql&#34;</span>,
+
+  <span style="color:#0086d2">&#34;process_time&#34;</span>,
+  <span style="color:#0086d2">&#34;wait_time&#34;</span>,
+  <span style="color:#0086d2">&#34;backoff_time&#34;</span>,
+  <span style="color:#0086d2">&#34;request_count&#34;</span>,
+  <span style="color:#0086d2">&#34;total_keys&#34;</span>,
+  <span style="color:#0086d2">&#34;processed_keys&#34;</span>
+]</code></pre></div>
+<p>正则表达式是参照 TiDB SLOW_QUERY 的输出逻辑编写的。具体见：</p>
+
+<p><a href="https://github.com/pingcap/tidb/blob/808eab19115d81a2940bca87e287dd7e58218c75/executor/adapter.go#L390">https://github.com/pingcap/tidb/blob/808eab19115d81a2940bca87e287dd7e58218c75/executor/adapter.go#L390</a></p>
+
+<blockquote>
+<p>这里需要注意的是，不同版本的 TiDB SLOW_QUERY 的输出格式不一样。
+目前我司线上 TiDB 版本从 1.x =&gt; 2.0 =&gt; 2.1，甚至有多个版本共存，所以需要根据版本对正则表达式做不同处理。
+上述正则表达式可以解析 2.0 和 2.1 版本的 SLOW_QUERY。</p>
+
+<p>更新：
+3.0 以后使用的是类似 mysql 的慢日志格式，上述正则已经不再适用。</p>
+</blockquote>
+
+<p>拿到这些数据后，需要将以下 Golang 的时间字符串（类似 <code>308.334206ms</code>）转换成 double 值，以便于 grafana 做监控。</p>
+
+<pre><code>cost_time
+process_time
+wait_time
+backoff_time
+</code></pre>
+
+<p>最后，将这些数据以 influxdb 要求的方式组织起来，写入到 influxdb 中。</p>
+
+<p>以上逻辑搞定后，再通过 flink 任务（或者其他 kafka consumer 形式）接入到 kafka 里。
+整个收集过程基本完毕。</p>
+
+<h3 id="grafana-监控">Grafana 监控</h3>
+
+<p>数据入到 InfluxDB 后，就可以在 Grafana 中建立统计指标，做实时监控。</p>
+
+<p>这里主要推荐两个监控：</p>
+
+<ul>
+<li>Full Scan 的 SQL 查询。 可以通过 <code>index_ids</code> 来判断是否是全表扫描，<code>index_ids</code> 为空，说明没有走索引查询。再结合主键是否 row handle，就可以判断查询是否是全表扫描，并迅速定位 user 和 ip。</li>
+<li>某个用户，某张表在过去10分钟的慢 SQL 统计。</li>
+</ul>
+
+<p>通过慢 SQL 监控，可以实时的感知当前 TiDB 集群的服务状态以及 PD 调度速率对用户的影响。</p>
+
+<p>比如说，TiKV 掉线，region leader 发生重新选举，对查询的影响比较大，耗时可到几十秒，持续时间与 TiKV 节点上的leader 个数有关。</p>
+
+<p>再比如，PD Leader 的主动切换基本不影响查询，而 TiKV evict-leader 速度过快会影响查询。</p>
+
+<p>如此等等。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>这套 TiDB 慢 SQL 监控方式，将 filebeat，以及 kafka，influxdb 这些基本组件组合在一起，各个组件分工明细，结构清晰，目前尚未出现问题。</p>
+
+<p>如果使用 logstash，可以省掉 kafka 这一步骤，直接在 logstash 中解析出结构数据。但基本的处理流程应该是不变的。</p>
+
+<p>最后，希望本文能够帮助到正在使用 TiDB 的你。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

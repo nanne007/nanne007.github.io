@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>关于 Y Combinator | Give me five</title>
+    <meta name="DC.Title" content="关于 Y Combinator">
+  
+
+  
+    <meta name="DC.Date" content="2014/10/14">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="y 算子的 scheme 实现">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/about-ycombinator/">
+  
+
+  
+    <meta name="keywords" content="ycombinator,scheme,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>关于 Y Combinator</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/10/14 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>我对 Y Combinator 的兴趣，源自于王垠的一篇讲丘奇和图灵的文章，还有刘未鹏的 <a href="http://mindhacks.cn/2006/10/15/cantor-godel-turing-an-eternal-golden-diagonal/">康托尔、哥德尔、图灵，永恒的金色对角线</a>。</p>
+
+<p>当然，网络上有很多关于 Y Combinator 的东西，个人比较推荐：</p>
+
+<ul>
+<li><a href="http://mvanier.livejournal.com/2897.html">explanation from Mike Vanier</a>，写的十分通俗易懂。</li>
+<li>PLLC 这本书也有详细的推导过程。（推荐前几章，我只看了前几章&hellip;）</li>
+</ul>
+
+<h3 id="y-combinator-for-lazy-evaluation">Y Combinator for Lazy Evaluation</h3>
+
+<blockquote>
+<p>关于 Evaluation 的概念，参见 <a href="http://en.wikipedia.org/wiki/Evaluation_strategy">wiki - Evaluation Strategy</a></p>
+</blockquote>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scheme" data-lang="scheme">(<span style="color:#fb660a;font-weight:bold">define </span><span style="color:#fb660a">Y</span>
+  (<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">f</span>)
+    ((<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">x</span>) (<span style="color:#fb660a">f</span> (<span style="color:#fb660a">x</span> <span style="color:#fb660a">x</span>)))
+     (<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">x</span>) (<span style="color:#fb660a">f</span> (<span style="color:#fb660a">x</span> <span style="color:#fb660a">x</span>))))))
+<span style="color:#080;background-color:#0f140f;font-style:italic">; for a given function f (which is a non-recursive function like almost-factorial),</span>
+<span style="color:#080;background-color:#0f140f;font-style:italic">; the corresponding recursive function can be obtained</span>
+<span style="color:#080;background-color:#0f140f;font-style:italic">; first by computing (lambda (x) (f (x x))),</span>
+<span style="color:#080;background-color:#0f140f;font-style:italic">; and then applying this lambda expression to itself.</span>
+<span style="color:#080;background-color:#0f140f;font-style:italic">; This is the usual definition of the normal-order Y combinator.</span></code></pre></div>
+<p>验证 <code>(Y f) = (f (Y f))</code>：</p>
+
+<pre><code>(Y f)
+= ((lambda (x) (f (x x)))
+   (lambda (x) (f (x x))))))
+= (f ((lambda (x) (f (x x)))
+      (lambda (x) (f (x x)))))
+= (f (Y f))
+</code></pre>
+
+<h3 id="y-combinator-for-strict-evaluation">Y Combinator for Strict Evaluation</h3>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scheme" data-lang="scheme"><span style="color:#080;background-color:#0f140f;font-style:italic">; just replace (x x) with (lambda (y) ((x x) y))</span>
+(<span style="color:#fb660a;font-weight:bold">define </span><span style="color:#fb660a">Y</span>
+  (<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">f</span>)
+    ((<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">x</span>) (<span style="color:#fb660a">x</span> <span style="color:#fb660a">x</span>))
+     (<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">x</span>) (<span style="color:#fb660a">f</span> (<span style="color:#fb660a;font-weight:bold">lambda </span>(<span style="color:#fb660a">y</span>) ((<span style="color:#fb660a">x</span> <span style="color:#fb660a">x</span>) <span style="color:#fb660a">y</span>)))))))</code></pre></div>
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

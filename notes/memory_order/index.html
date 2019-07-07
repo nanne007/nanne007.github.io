@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>mermory barrier 阅读笔记 | Give me five</title>
+    <meta name="DC.Title" content="mermory barrier 阅读笔记">
+  
+
+  
+    <meta name="DC.Date" content="2019/03/14">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="关于缓存一致性和内存屏障的阅读记录">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/memory_order/">
+  
+
+  
+    <meta name="keywords" content="cache coherence,memory order,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>mermory barrier 阅读笔记</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2019/03/14 
+    
+
+    
+</header>
+
+<article>
+
+
+<p><a href="https://mechanical-sympathy.blogspot.com/2011/07/memory-barriersfences.html">https://mechanical-sympathy.blogspot.com/2011/07/memory-barriersfences.html</a> 的阅读笔记。</p>
+
+<p>memory barrier 保证 barrier 两边的指令执行结果可以以程序顺序的方式被其他 CPU 观察到。</p>
+
+<p>store barrier:</p>
+
+<blockquote>
+<p>&lsquo;sfence&rsquo; instruction on x86, waits for all store instructions prior to the barrier to be written from the store buffer to the L1 cache for the CPU on which it is issued.
+All previous updates to memory that happened before the barrier are now visible.</p>
+</blockquote>
+
+<p>visible 只是说 数据写到 cache 了，但还不能保证其他 cpu 的 cache 也是最新的。</p>
+
+<p>load barrier:</p>
+
+<blockquote>
+<p>“lfence” instruction on x86, ensures all load instructions after the barrier to happen after the barrier
+and then wait on the load buffer to drain for the issuing CPU.</p>
+</blockquote>
+
+<p>保证 barrier 之后的 load 指令一定发生在 barrier 之后，不能被重排到 barrier 之前。
+并 flush load buffer 中的指令，去获取数据（from other cpu cache or memory）。
+也就是说 barrier 之后的 load 指令要在等待之前 load 指令都获取到最新值之后才能执行。</p>
+
+<h3 id="volatile-in-java">volatile in Java</h3>
+
+<p>All writes that occur before a volatile store are visible by any other threads with the predicate that the other threads load this new store.</p>
+
+<p>在一个线程里更新 volatile 字段可以保证，当其他线程看见这个 volatile 字段的更新值后，也能看见这个线程在之前做的更新操作。</p>
+
+<h3 id="为什么要有-memory-order">为什么要有 memory order</h3>
+
+<p><strong>加了 Store Buffer 之后，存在 store buffer 中的新值无法被其他 CPU 感知到。</strong>
+<strong>另外，invalidate queue 中的 message 被处理完后，才能正常读到新值。</strong></p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
