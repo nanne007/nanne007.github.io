@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>ES6 新特性 | Give me five</title>
+    <meta name="DC.Title" content="ES6 新特性">
+  
+
+  
+    <meta name="DC.Date" content="2015/06/15">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="Ref mozilla&amp;rsquo;s es6 in depth
+for-of loop Via https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/
+for-of 只是一个语法糖。 内部需要借助 iterator，凡是实现 iterator 接口的 object 都可以使用 for-of。
+所谓的 iterator 接口只是需要 object 包含一个 key 为 Symbol.iterator 的函数字段，该函数执行返回 iterator 对象。
+iterator 对象需要实现 next 方法，以及两个可选的方法： return 和 throw(exc)。
+如果在 for-of 过程中 break 或者 return 或者 exception 了， return 方法就会被调用。
+下面是一个简单的例子：（斐波那契数）
+class Fibonacci { constructor() { this.a = 0; this.b = 1; } [Symbol.iterator]() { return { next: () =&amp;gt; { const t = this.">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/about-es6/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>ES6 新特性</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2015/06/15 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>Ref <a href="https://hacks.mozilla.org/category/es6-in-depth/">mozilla&rsquo;s es6 in depth</a></p>
+
+<h2 id="for-of-loop">for-of loop</h2>
+
+<p>Via <a href="https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/">https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/</a></p>
+
+<p>for-of 只是一个语法糖。
+内部需要借助 iterator，凡是实现 iterator 接口的 object 都可以使用 for-of。</p>
+
+<p>所谓的 iterator 接口只是需要 object 包含一个 key 为 <code>Symbol.iterator</code> 的函数字段，该函数执行返回 iterator 对象。</p>
+
+<p>iterator 对象需要实现 <code>next</code> 方法，以及两个可选的方法： <code>return</code> 和 <code>throw(exc)</code>。</p>
+
+<p>如果在 for-of 过程中 break 或者 return 或者 exception 了， <code>return</code> 方法就会被调用。</p>
+
+<p>下面是一个简单的例子：（斐波那契数）</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">class</span> Fibonacci {
+    constructor() {
+        <span style="color:#fb660a;font-weight:bold">this</span>.a = <span style="color:#0086f7;font-weight:bold">0</span>;
+        <span style="color:#fb660a;font-weight:bold">this</span>.b = <span style="color:#0086f7;font-weight:bold">1</span>;
+
+    }
+
+    [Symbol.iterator]() {
+        <span style="color:#fb660a;font-weight:bold">return</span> {
+            next: () =&gt; {
+                <span style="color:#fb660a;font-weight:bold">const</span> t = <span style="color:#fb660a;font-weight:bold">this</span>.b;
+                <span style="color:#fb660a;font-weight:bold">this</span>.b = <span style="color:#fb660a;font-weight:bold">this</span>.a + <span style="color:#fb660a;font-weight:bold">this</span>.b;
+                <span style="color:#fb660a;font-weight:bold">this</span>.a = t;
+                <span style="color:#fb660a;font-weight:bold">return</span> { done: <span style="color:#fb660a;font-weight:bold">false</span>, value: <span style="color:#fb660a;font-weight:bold">this</span>.b - <span style="color:#fb660a;font-weight:bold">this</span>.a };
+            },
+            <span style="color:#fb660a;font-weight:bold">return</span>: () =&gt; {
+              console.log(<span style="color:#0086d2">&#34;exit&#34;</span>);
+            }
+        };
+    }
+}
+</code></pre></div>
+<p>在 for-of 中使用它：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">for</span>(<span style="color:#fb660a;font-weight:bold">var</span> fi <span style="color:#fb660a;font-weight:bold">of</span> <span style="color:#fb660a;font-weight:bold">new</span> Fibonacci()) {
+  <span style="color:#fb660a;font-weight:bold">if</span>(fi &gt; <span style="color:#0086f7;font-weight:bold">10</span>) {
+    <span style="color:#fb660a;font-weight:bold">break</span>;
+  }
+
+  console.log(fi);
+}
+</code></pre></div>
+<p><a href="http://babeljs.io">babel</a> 会将上述代码转义成下面这样：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">var</span> _iteratorNormalCompletion = <span style="color:#fb660a;font-weight:bold">true</span>;
+<span style="color:#fb660a;font-weight:bold">var</span> _didIteratorError = <span style="color:#fb660a;font-weight:bold">false</span>;
+<span style="color:#fb660a;font-weight:bold">var</span> _iteratorError = <span style="color:#fb660a;font-weight:bold">undefined</span>;
+
+<span style="color:#fb660a;font-weight:bold">try</span> {
+
+    <span style="color:#fb660a;font-weight:bold">for</span> (<span style="color:#fb660a;font-weight:bold">var</span> _iterator = <span style="color:#fb660a;font-weight:bold">new</span> Fibonacci()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = <span style="color:#fb660a;font-weight:bold">true</span>) {
+        <span style="color:#fb660a;font-weight:bold">var</span> fi = _step.value;
+
+        <span style="color:#fb660a;font-weight:bold">if</span> (fi &gt; <span style="color:#0086f7;font-weight:bold">10</span>) {
+            <span style="color:#fb660a;font-weight:bold">break</span>;
+        }
+
+        console.log(fi);
+    }
+} <span style="color:#fb660a;font-weight:bold">catch</span> (err) {
+    _didIteratorError = <span style="color:#fb660a;font-weight:bold">true</span>;
+    _iteratorError = err;
+} <span style="color:#fb660a;font-weight:bold">finally</span> {
+    <span style="color:#fb660a;font-weight:bold">try</span> {
+        <span style="color:#fb660a;font-weight:bold">if</span> (!_iteratorNormalCompletion &amp;&amp; _iterator[<span style="color:#0086d2">&#34;return&#34;</span>]) {
+            _iterator[<span style="color:#0086d2">&#34;return&#34;</span>]();
+        }
+    } <span style="color:#fb660a;font-weight:bold">finally</span> {
+        <span style="color:#fb660a;font-weight:bold">if</span> (_didIteratorError) {
+            <span style="color:#fb660a;font-weight:bold">throw</span> _iteratorError;
+        }
+    }
+}
+</code></pre></div>
+<p>可以看到，当 for-of 不是正常结束的时候，<code>return</code> 就会执行（当然，如果定义了的话）。</p>
+
+<p>至于说 <code>throw(exc)</code>, 下一节再看。</p>
+
+<h2 id="生成器">生成器</h2>
+
+<ul>
+<li><a href="https://hacks.mozilla.org/2015/05/es6-in-depth-generators">https://hacks.mozilla.org/2015/05/es6-in-depth-generators</a></li>
+<li><a href="https://hacks.mozilla.org/2015/07/es6-in-depth-generators-continued">https://hacks.mozilla.org/2015/07/es6-in-depth-generators-continued</a></li>
+</ul>
+
+<p>语法： <code>function* (...args) { ... }</code> ，称之为 <strong>生成器函数</strong>（generator function）。</p>
+
+<p>可以在 <em>生成器函数</em> 中使用 yield 方法达到 iterator 效果。</p>
+
+<p>这里的 <code>yield</code> 和 ruby 中的 <code>yield</code> 并没有本质区别。</p>
+
+<p>函数 yield 过程：</p>
+
+<p>(函数调用开始)start of function &ndash;&gt; (<code>.next()</code>)yield &ndash;&gt; (<code>.next()</code>)yield &ndash;&gt; &hellip;. &ndash;&gt; (<code>.next()</code>)end of function</p>
+
+<h3 id="yield-返回值"><code>yield</code> 返回值</h3>
+
+<p><code>yield [expression]</code> 也可以返回一个值： <code>var v = yield someExpression</code>。
+这个值从 <code>.next(value)</code> 通过参数  <code>value</code> 传过来。</p>
+
+<p>start of function &ndash;&gt; (<code>.next(undefined)</code>)yield &ndash;&gt; (<code>.next(v)</code>)yield &ndash;&gt; &hellip;. &ndash;&gt; (<code>.next(v)</code>)end of function</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">var</span> g = getSomeGenerator();
+<span style="color:#080;background-color:#0f140f;font-style:italic">// new created generator is suspended.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">//  when first call next, the value passed to next is meaningless.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">// and the generator run to first yield, and suspended again.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>g.next(someValue);
+
+<span style="color:#080;background-color:#0f140f;font-style:italic">// when call next again, the value passed to it is the last-encountered yield&#39;s  return value.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>g.next(anotherValue);
+</code></pre></div><div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">function</span>* range(start, end) {
+  <span style="color:#fb660a;font-weight:bold">try</span> {
+    <span style="color:#fb660a;font-weight:bold">for</span>(<span style="color:#fb660a;font-weight:bold">var</span> i = start; i &lt; end; i++)
+      console.log(<span style="color:#fb660a;font-weight:bold">yield</span> i);
+  }
+  <span style="color:#fb660a;font-weight:bold">finally</span> {
+    console.log(<span style="color:#0086d2">&#34;clean up&#34;</span>);
+  }
+
+}
+
+<span style="color:#fb660a;font-weight:bold">var</span> rng = range(<span style="color:#0086f7;font-weight:bold">0</span>, <span style="color:#0086f7;font-weight:bold">10</span>);
+
+rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// no output
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.<span style="color:#fb660a;font-weight:bold">return</span>(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// output &#39;what&#39;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// output &#39;what&#39;
+</span></code></pre></div>
+<h3 id="return-方法"><code>.return</code> 方法</h3>
+
+<p>前面说过，iterator 在迭代的过程中，可能会 break，会 return，也会 error，这个时候 iterator 的 <code>return</code> 方法会被调用来对 iterator 作一些收尾工作，这个收尾工作可能是关闭文件，断开数据库连接等等。</p>
+
+<p>Generator 作为一种 Iterator，也可以定义 <code>return</code> 方法。<code>try {} finally {}</code> 中的 <code>finally</code> 就是。。（不要问我，我也不知道为啥要这么设计）。
+如果 Generator 中有使用 try-finally，那么finally 块就相当于 <code>return</code>。。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">function</span>* range(start, end) {
+  <span style="color:#fb660a;font-weight:bold">try</span> {
+    <span style="color:#fb660a;font-weight:bold">for</span>(<span style="color:#fb660a;font-weight:bold">var</span> i = start; i &lt; end; i++)
+      console.log(<span style="color:#fb660a;font-weight:bold">yield</span> i);
+  }
+  <span style="color:#fb660a;font-weight:bold">finally</span> {
+    console.log(<span style="color:#0086d2">&#34;clean up&#34;</span>);
+  }
+
+}
+
+<span style="color:#fb660a;font-weight:bold">var</span> rng = range(<span style="color:#0086f7;font-weight:bold">0</span>, <span style="color:#0086f7;font-weight:bold">10</span>);
+
+rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// no output
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// output &#39;what&#39;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.<span style="color:#fb660a;font-weight:bold">return</span>(); <span style="color:#080;background-color:#0f140f;font-style:italic">// output &#39;clean up&#39;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// no output
+</span></code></pre></div>
+<h3 id="throw-方法"><code>.throw</code> 方法</h3>
+
+<p>Generator 的调用者也可以直接 <code>throw(exception)</code>，这相当于 <code>yield someExpression</code> 在执行过程中出错，<code>exception</code> 会在 Generator  中抛出。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">function</span>* range(start, end) {
+  <span style="color:#fb660a;font-weight:bold">try</span> {
+    <span style="color:#fb660a;font-weight:bold">for</span>(<span style="color:#fb660a;font-weight:bold">var</span> i = start; i &lt; end; i++)
+      console.log(<span style="color:#fb660a;font-weight:bold">yield</span> i);
+  } <span style="color:#fb660a;font-weight:bold">catch</span> (e) {
+    console.log(<span style="color:#0086d2">`error: </span><span style="color:#0086d2">${</span>e<span style="color:#0086d2">}</span><span style="color:#0086d2">`</span>);
+  }
+  <span style="color:#fb660a;font-weight:bold">finally</span> {
+    console.log(<span style="color:#0086d2">&#34;clean up&#34;</span>);
+  }
+
+}
+
+<span style="color:#fb660a;font-weight:bold">var</span> rng = range(<span style="color:#0086f7;font-weight:bold">0</span>, <span style="color:#0086f7;font-weight:bold">10</span>);
+
+rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// no output
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.<span style="color:#fb660a;font-weight:bold">throw</span>(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// output &#39;error: what&#39; and &#39;clean up&#39;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>rng.next(<span style="color:#0086d2">&#34;what&#34;</span>); <span style="color:#080;background-color:#0f140f;font-style:italic">// no output
+</span></code></pre></div>
+<h3 id="yield"><code>yield*</code></h3>
+
+<p>往往需要在一个 generator 中调用另一个 generator，</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">function</span>* concat(generatora, generatorb) {
+  <span style="color:#fb660a;font-weight:bold">for</span> (<span style="color:#fb660a;font-weight:bold">var</span> a <span style="color:#fb660a;font-weight:bold">of</span> generatora) <span style="color:#fb660a;font-weight:bold">yield</span> a;
+  <span style="color:#fb660a;font-weight:bold">for</span> (<span style="color:#fb660a;font-weight:bold">var</span> b <span style="color:#fb660a;font-weight:bold">of</span> generatorb) <span style="color:#fb660a;font-weight:bold">yield</span> b;
+}
+</code></pre></div>
+<p><code>yield*</code> 更适用于这种的情况。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">function</span>* concat(generatora, generatorb) {
+  <span style="color:#fb660a;font-weight:bold">yield</span>* a;
+  <span style="color:#fb660a;font-weight:bold">yield</span>* b;
+}
+</code></pre></div>
+<h3 id="todo-生成器结合-promise">TODO：生成器结合 <code>Promise</code></h3>
+
+<h2 id="template-string">Template String</h2>
+
+<p>模板字符串功能在其他语言已经很常见了：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#080;background-color:#0f140f;font-style:italic">// javascript
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#0086d2">`hello, </span><span style="color:#0086d2">${</span>yourname<span style="color:#0086d2">}</span><span style="color:#0086d2">`</span>
+</code></pre></div><div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#080;background-color:#0f140f;font-style:italic">// scala
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#0086d2">s&#34;hello, </span><span style="color:#0086d2">$yourname</span><span style="color:#0086d2">&#34;</span></code></pre></div><div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#080;background-color:#0f140f;font-style:italic"># ruby</span>
+<span style="color:#0086d2">&#34;hello, </span><span style="color:#0086d2">#{</span>yourname<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span></code></pre></div><div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir"><span style="color:#080;background-color:#0f140f;font-style:italic"># elixir</span>
+<span style="color:#0086d2">~s(hello, </span><span style="color:#0086d2">#{</span>yourname<span style="color:#0086d2">}</span><span style="color:#0086d2">)</span></code></pre></div>
+<p>但是，从本质上来说，javascript 的 <strong>template string</strong> 和 elixir 的 <a href="http://elixir-lang.org/getting-started/sigils.html#custom-sigils">sigils</a> 更类似，可以自定义 template 处理方法。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#fb660a;font-weight:bold">function</span> SaferHTML(templateData) {
+  <span style="color:#fb660a;font-weight:bold">var</span> s = templateData[<span style="color:#0086f7;font-weight:bold">0</span>];
+  <span style="color:#fb660a;font-weight:bold">for</span> (<span style="color:#fb660a;font-weight:bold">var</span> i = <span style="color:#0086f7;font-weight:bold">1</span>; i &lt; arguments.length; i++) {
+    <span style="color:#fb660a;font-weight:bold">var</span> arg = String(arguments[i]);
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Escape special characters in the substitution.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    s += arg.replace(<span style="color:#0086d2">/&amp;/g</span>, <span style="color:#0086d2">&#34;&amp;amp;&#34;</span>)
+            .replace(<span style="color:#0086d2">/&lt;/g</span>, <span style="color:#0086d2">&#34;&amp;lt;&#34;</span>)
+            .replace(<span style="color:#0086d2">/&gt;/g</span>, <span style="color:#0086d2">&#34;&amp;gt;&#34;</span>);
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Don&#39;t escape special characters in the template.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    s += templateData[i];
+  }
+  <span style="color:#fb660a;font-weight:bold">return</span> s;
+}
+
+<span style="color:#fb660a;font-weight:bold">let</span> yourname = <span style="color:#0086d2">&#34;&lt;myname&gt;&#34;</span>;
+<span style="color:#fb660a;font-weight:bold">let</span> greeting = SaferHTML<span style="color:#0086d2">`&lt;p&gt;hello, </span><span style="color:#0086d2">${</span>yourname<span style="color:#0086d2">}</span><span style="color:#0086d2">&lt;/p&gt;`</span>; <span style="color:#080;background-color:#0f140f;font-style:italic">// =&gt; &lt;p&gt;hello, &amp;lt;myname&amp;gt;&lt;/p&gt;
+</span></code></pre></div>
+<h3 id="rest-parameters-and-defaults-destructuring">Rest parameters and defaults &amp;&amp; Destructuring</h3>
+
+<p>这两个功能不再细说，其他语言早已经实现了。</p>
+
+<h3 id="arrow-function">Arrow Function</h3>
+
+<p>类似于 <em>coffeescript</em> 中的函数简写形式。
+值得注意的一点是 <em>arrow function</em> 里面的 <code>this</code> 是 context 中的 <code>this</code>。</p>
+
+<h3 id="symbol">Symbol</h3>
+
+<p>符号类型是新加的一种类型。</p>
+
+<p>其他语言如，Ruby，Elixir 都有这个概念。</p>
+
+<p>但是 Symbol 主要是 ES6 为了做兼容而想出来的一种不失优雅的解决方案。
+不过以后应该会派上更大的用场。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

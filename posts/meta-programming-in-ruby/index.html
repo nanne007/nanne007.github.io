@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Ruby 元编程基础 | Give me five</title>
+    <meta name="DC.Title" content="Ruby 元编程基础">
+  
+
+  
+    <meta name="DC.Date" content="2014/10/16">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="对象模型 Ruby 的 class 关键字更像是一个作用域操作符，而不是类型声明。 class 的核心任务是将你带到类的上下文中，让你可以在其中定义方法。
+对象能做的事情 Object#instance_variables() Object#methods() Object#singleton_methods() Object#class() BasicObject#instance_eval() Objecy#extend()  只有类能做的事情 Module#instance_methods() Module#method_defined?() Module#public_instance_methods() Module#public_method_defined?() Module#public_class_methods() Module#protected_instance_methods() Module#protected_method_defined?() Module#private_instance_methods() Module#private_method_defined?() Module#private_class_methods() Module#ancestors() Module#class_eval() Module#attr_*() # series ... Class#superclass() Module#include() Module#included() Module#extended()  调用方法的过程 在 ruby 中调用方法，需要执行以下两个步骤。
+1. 方法查找 向右一步，再向上：先向右一步，来到方法接受者所在的类，然后沿着类的祖先链向上找到给定的方法。
+其中需要注意的是，在类中包含模块时，模块是如何加入到类的祖先链中的。(Object 类中就包含了 Kernel 模块)
+2. 执行方法 执行方法时，需要知道哪个对象充当当前对象(亦即 self)。
+类/模块 定义中(任何方法定义之外)的 self 就是这个类/模块。
+扩展知识：顶级上下文、私有原则
+方法 动态方法 动态调用方法：利用 Object#send() 动态调用方法，也称 动态派发 例如：只调用那些名字匹配某种模式的方法
+动态定义方法：利用 Module#define_method()，为其提供一个 方法名 和一个 充当方法主体的块">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/meta-programming-in-ruby/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Ruby 元编程基础</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/10/16 
+    
+
+    
+</header>
+
+<article>
+
+
+<h2 id="对象模型">对象模型</h2>
+
+<p><em>Ruby</em> 的 <code>class</code> 关键字更像是一个作用域操作符，而不是类型声明。
+<code>class</code> 的核心任务是将你带到类的上下文中，让你可以在其中定义方法。</p>
+
+<h3 id="对象能做的事情">对象能做的事情</h3>
+
+<pre><code>Object#instance_variables()
+Object#methods()
+Object#singleton_methods()
+Object#class()
+BasicObject#instance_eval()
+
+Objecy#extend()
+</code></pre>
+
+<h3 id="只有类能做的事情">只有类能做的事情</h3>
+
+<pre><code>Module#instance_methods()
+Module#method_defined?()
+
+Module#public_instance_methods()
+Module#public_method_defined?()
+Module#public_class_methods()
+
+Module#protected_instance_methods()
+Module#protected_method_defined?()
+
+Module#private_instance_methods()
+Module#private_method_defined?()
+Module#private_class_methods()
+
+Module#ancestors()
+
+Module#class_eval()
+
+Module#attr_*() # series ...
+
+Class#superclass()
+
+Module#include()
+Module#included()
+
+Module#extended()
+</code></pre>
+
+<h3 id="调用方法的过程">调用方法的过程</h3>
+
+<p>在 ruby 中调用方法，需要执行以下两个步骤。</p>
+
+<h4 id="1-方法查找">1. 方法查找</h4>
+
+<p><strong>向右一步，再向上</strong>：先向右一步，来到方法接受者所在的类，然后沿着类的祖先链向上找到给定的方法。</p>
+
+<p>其中需要注意的是，在类中包含模块时，模块是如何加入到类的祖先链中的。(<code>Object</code> 类中就包含了 <code>Kernel</code> 模块)</p>
+
+<h4 id="2-执行方法">2. 执行方法</h4>
+
+<p>执行方法时，需要知道哪个对象充当当前对象(亦即 <code>self</code>)。</p>
+
+<p>类/模块 定义中(任何方法定义之外)的 <code>self</code> 就是这个类/模块。</p>
+
+<p><strong>扩展知识：顶级上下文、私有原则</strong></p>
+
+<h2 id="方法">方法</h2>
+
+<h3 id="动态方法">动态方法</h3>
+
+<p>动态调用方法：利用 <code>Object#send()</code> 动态调用方法，也称 <strong>动态派发</strong>
+例如：只调用那些名字匹配某种模式的方法</p>
+
+<p>动态定义方法：利用 <code>Module#define_method()</code>，为其提供一个 <em>方法名</em> 和一个 <em>充当方法主体的块</em></p>
+
+<p><strong>扩展知识：符号和字符串之间的转换方法: <code>String#to_sym(), String#intern(), Symbol#to_s(), Symbol#id2name()</code></strong></p>
+
+<h3 id="method-missing-方法">method_missing 方法</h3>
+
+<p>进行方法查找时，如果没有找到这个方法，就会在接收者上调用 <code>method_missing</code> 方法。
+所有无法投递的消息都会在 <code>method_missing</code> 里处理。</p>
+
+<p>所有的 <code>Object</code> 实例都会有该方法，因为 <code>method_missing</code> 是 <code>BasicObject</code> 类的一个实例方法，
+并且默认的行为是产生 <code>NoMethodError</code> 错误。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086d2">BasicObject</span>.private_instance_methods.include? <span style="color:#0086d2">:method_missing</span> <span style="color:#080;background-color:#0f140f;font-style:italic"># =&gt; true</span></code></pre></div>
+<h3 id="幽灵方法">幽灵方法</h3>
+
+<p>所以，可以覆写 <code>method_missing</code> 方法，编写自己的逻辑，处理那些并不存在的方法，
+从调用者角度看，就好像接收者真的存在这些方法似的，但事实上，并没有。
+Ruby 把具有这种行为的方法称为 <strong>幽灵方法</strong></p>
+
+<h3 id="动态代理">动态代理</h3>
+
+<p>动态代理就是一个对象，
+这个对象可以利用 <code>method_missing</code> 捕获幽灵方法，
+然后把它们转发给另一个对象（有时也会在转发前包装一些自己的逻辑）。</p>
+
+<h3 id="幽灵方法带来的问题">幽灵方法带来的问题</h3>
+
+<ul>
+<li>幽灵方法，并不是真正的方法。</li>
+<li>无法在自动生成的文档中找到，也不会出现在 <code>Object#methods()</code> 获得的方法列表中，</li>
+<li>同样，<code>Object#respond_to?()</code> 也不会响应幽灵方法。</li>
+</ul>
+
+<p>可以在覆写 <code>method_missing</code> 方法的同时，也覆写 <code>respond_to?</code> 方法。。</p>
+
+<h3 id="const-missing-方法">const_missing 方法</h3>
+
+<p><code>const_missing</code> 是 <code>Module</code> 的一个实例方法。
+当引用一个不存在的常量时，Ruby 会把这个常量名作为一个符号传递给 <code>const_missing</code> 方法。</p>
+
+<p>可以在一个给定的 <strong>命名空间</strong> 中定义该方法，处理该命名空间内的常量。</p>
+
+<h3 id="method-missing-带来的问题">method_missing 带来的问题</h3>
+
+<ol>
+<li>神秘的bug：在 <code>method_missing</code> 中，使用超出作用域范围内的变量
+或调用未定义的方法会导致再次调用 <code>method_missing</code> 方法，这样的 bug 往往很难被发现。</li>
+</ol>
+
+<p>所以，仅仅在必要的时候，再使用幽灵方法。
+   最好使用迭代的方式开发程序，先使用普通方法实现，确定没问题，再重构到 <code>method_missing</code> 方法中。
+2. 方法命名冲突：如果一个幽灵方法与对象的某个真实的方法（可能是继承过来的）发生名字冲突，
+   那么会首先调用这个真实的方法，幽灵方法就不会起作用。</p>
+
+<p>可以通过删除这个真实存在但不需要的方法：使用 <code>Module#undef_method</code> 或 <code>Module#remove_method</code>，注意区别。
+   这样的类，叫做 <strong>白板类</strong> （删除了某些从 <code>Object</code> 继承过来的方法）。Ruby 1.9 后，由 <code>BasicObject</code> 作为根节点，
+   继承它的类自动成为白板类。
+3. 性能问题：使用幽灵方法相对来说会更慢，因为方法的查找路径要长些。</p>
+
+<p>可以折中处理：第一次调用幽灵方法，可以动态创建一个方法，这样以后的调用就直接调用这个动态方法。</p>
+
+<h2 id="代码块">代码块</h2>
+
+<h3 id="块-闭包">块、闭包</h3>
+
+<p>下面的代码解释了 <strong>块(block)</strong> 的基本用法</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">my_method</span>(a_arg)
+  another_arg = <span style="color:#0086f7;font-weight:bold">2</span>
+  <span style="color:#fb660a;font-weight:bold">yield</span>(a_arg, another_arg) <span style="color:#fb660a;font-weight:bold">if</span> block_given?
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+my_method(<span style="color:#0086f7;font-weight:bold">1</span>) { |a, b| a + b } <span style="color:#080;background-color:#0f140f;font-style:italic"># =&gt; 3</span>
+
+<span style="color:#080;background-color:#0f140f;font-style:italic"># block_given? is private instance method of Kernel</span>
+<span style="color:#0086d2">Kernel</span>.private_instance_methods.include? <span style="color:#0086d2">:block_given?</span> <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; true</span></code></pre></div>
+<p>当定义一个块时，块会获取当时环境的绑定，它会带着绑定一同进入使用它的方法中，所谓的闭包特性即在于此。</p>
+
+<h3 id="作用域">作用域</h3>
+
+<p><strong>要点：什么时候切换了作用域，怎样让 <em>绑定(binding)</em> 穿越作用域。</strong></p>
+
+<p>可以使用 <code>Kernel#local_variables</code> 查看当前作用域的局部变量。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086d2">Kernel</span>.private_instance_methods.include? <span style="color:#0086d2">:local_variables</span> <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; true</span></code></pre></div>
+<p>Ruby 会在三个地方打开一个新的作用域：
+- 类定义，用 <code>class</code> 作为标志
+- 模块定义，用 <code>module</code> 作为标志
+- 方法调用，用 <code>def</code> 作为标志（定义方法并不真正打开作用域，只有在调用时，才算是）</p>
+
+<p>只要程序切换了作用域， 绑定也会随之改变。那如何让绑定穿越作用域门呢？</p>
+
+<p>我想答案应该是
+- 用 <code>Class.new</code> 代替 <code>class</code>
+- 用 <code>Module#define_method</code> 代替 <code>def</code>
+- 闭包</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">my_var = <span style="color:#0086d2">&#34;success&#34;</span>
+<span style="color:#0086d2">MyClass</span> = <span style="color:#0086d2">Class</span>.new <span style="color:#fb660a;font-weight:bold">do</span>
+  puts my_var
+  define_method <span style="color:#0086d2">:my_method</span> <span style="color:#fb660a;font-weight:bold">do</span>
+    puts my_var
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>这种方法常被称为 <strong>嵌套文法作用域</strong> 或 <strong>扁平化作用域</strong></p>
+
+<p><strong>共享作用域</strong> 是 <strong>扁平化作用域</strong> 一个很好的应用。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#080;background-color:#0f140f;font-style:italic"># shared scope</span>
+<span style="color:#080;background-color:#0f140f;font-style:italic"># instances of Counter share the same variable-counter</span>
+<span style="color:#fb660a;font-weight:bold">class</span> Counter
+  counter = <span style="color:#0086f7;font-weight:bold">0</span>
+  define_method <span style="color:#0086d2">:value</span> { counter }
+  define_method <span style="color:#0086d2">:inc</span> { |x| counter += x }
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+c = <span style="color:#0086d2">Counter</span>.new
+c.value <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; 0</span>
+c.inc <span style="color:#0086f7;font-weight:bold">4</span>
+c.value <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; 4</span>
+d = <span style="color:#0086d2">Counter</span>.new
+d.value <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; 4</span>
+d.inc <span style="color:#0086f7;font-weight:bold">4</span>
+d.value <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; 8</span>
+c.value <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; 8</span></code></pre></div>
+<h3 id="basicobject-instance-eval-的魔力">BasicObject#instance_eval() 的魔力</h3>
+
+<p><code>BasicObject#instance_eval()</code> 方法赋予了对象打破封装的能力。
+给 <code>instance_eval</code> 提供的块，把运行它的 obj 作为 <code>self</code>，由此，块可以访问 obj 的实例变量和私有/公有方法。
+这样的块，被称为 <em>上下文探针</em>, 因为这些块可以深入到对象中执行代码。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyClass
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">initialize</span>; @v = <span style="color:#0086f7;font-weight:bold">1</span>; <span style="color:#fb660a;font-weight:bold">end</span>
+  <span style="color:#fb660a">private</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">my_private</span>; p <span style="color:#0086d2">&#34;private method&#34;</span>; <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#0086d2">MyClass</span>.new.instance_eval <span style="color:#fb660a;font-weight:bold">do</span>
+  self
+  @v <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; 1</span>
+  my_private <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; &#34;private method&#34;</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p><strong>TODO：<code>instance_eval</code> 能做的不止这些，这里需要补充。</strong></p>
+
+<h3 id="可调用对象">可调用对象</h3>
+
+<p>块并不是一个对象，但有时候，我们需要存储一个块供以后执行，Ruby 提供了 <code>Proc</code> 类。
+通过把块传递给 <code>Proc#new</code> 方法，来创建一个 <code>proc</code>，之后需要使用的时候，用 <code>Proc#call</code> 来调用。
+这种技术称为 <strong>延迟执行</strong>。</p>
+
+<p>另外，Ruby 还提供了两个内核方法，用来转换块为 <code>proc</code>，分别是 <code>Kernel#lambda()</code> 以及 <code>Kernel#proc()</code></p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086d2">Kernel</span>.private_instance_methods.include? <span style="color:#0086d2">:lambda</span> <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; true</span>
+<span style="color:#0086d2">Kernel</span>.private_instance_methods.include? <span style="color:#0086d2">:proc</span> <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; true</span></code></pre></div>
+<p><code>lambda()</code> 和 <code>proc()</code> 的两个区别：
+- <code>proc</code> 中的 <code>return</code> 关键字 是从调用它的作用域中返回
+- <code>proc</code> 对参数的个数要求不严格，参数多了，舍弃，参数少了，赋予为 <code>nil</code></p>
+
+<p>方法也是可调用的。
+- 使用<code>Object#method()</code> 方法获得用 <code>Method</code> 的对象表示的方法，用<code>Method#call</code>调用。
+- <code>Method</code> 对象只会在它自身所在对象的作用域中执行。
+- <code>Method#to_proc</code> 将方法转换为 <code>proc</code>。
+- <code>Module#define_method</code> 将块转换为方法。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

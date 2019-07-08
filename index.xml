@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Home on Give me five</title>
+    <title>主页 on Give me five</title>
     <link>/</link>
-    <description>Recent content in Home on Give me five</description>
+    <description>Recent content in 主页 on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 14 Mar 2019 00:00:00 +0000</lastBuildDate>
@@ -40,6 +40,18 @@ TiDB 慢日志配置 TiDB 有两个选项用来配置慢 SQL 日志：
     </item>
     
     <item>
+      <title>关于 RocksDB 的 sub-compaction</title>
+      <link>/notes/about-sub-compaction-in-rocksdb/</link>
+      <pubDate>Sat, 15 Dec 2018 22:20:32 +0800</pubDate>
+      
+      <guid>/notes/about-sub-compaction-in-rocksdb/</guid>
+      <description>之前我一直以为 sub-compaction 只会在 l0-&amp;gt; l1 生效。
+今天观察线上 tikv 节点的 rocksdb log，发现 l2 -&amp;gt; l3 的 manual compaction，它的 sub compaction 竟然是 2。我配置的 tikv max_sub_compactions 也是 2。
+看了 rocksdb(5.8.7) 的代码：
+bool Compaction::ShouldFormSubcompactions() const { if (immutable_cf_options_.max_subcompactions &amp;lt;= 1 || cfd_ == nullptr) { return false; } if (cfd_-&amp;gt;ioptions()-&amp;gt;compaction_style == kCompactionStyleLevel) { return start_level_ == 0 &amp;amp;&amp;amp; output_level_ &amp;gt; 0 &amp;amp;&amp;amp; !IsOutputLevelEmpty(); } else if (cfd_-&amp;gt;ioptions()-&amp;gt;compaction_style == kCompactionStyleUniversal) { return number_levels_ &amp;gt; 1 &amp;amp;&amp;amp; output_level_ &amp;gt; 0; } else { return false; } }  上面只提到了 l0 -&amp;gt; ln。</description>
+    </item>
+    
+    <item>
       <title>重读 Raft 论文</title>
       <link>/notes/raft-revisited/</link>
       <pubDate>Mon, 10 Dec 2018 00:00:00 +0000</pubDate>
@@ -68,12 +80,87 @@ Section 3: Serializablility 首先说明了 SI 的问题：
     </item>
     
     <item>
+      <title>LSM 的 Compaction 策略</title>
+      <link>/posts/lsm-tree-compaction-strategy/</link>
+      <pubDate>Tue, 23 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/lsm-tree-compaction-strategy/</guid>
+      <description>via http://www.scylladb.com/2018/01/17/compaction-series-space-amplification/
+ Size-Tiered Compaction Strategy(STCS) memtable 定期的刷新到磁盘，成为一个一个比较小的 sstable。
+当这些小的 sstable 的数量达到一定个数（比如说4个）时，这四个 sstable 会被 compact 成一个稍大些的 sstable。
+当稍大些的 sstable 的数量又达到一定个数时，又会被一起 compact 成更大的 sstable。
+ 实际上要复杂些，因为多个 sstable compact 在一起，可能变得更小。假如，这些 sstable 里面 key 的重复率比较高（key 的更新频率高），compact 后的 sstable 的 key 数量不会增加太多。
+ 带来的问题 存储放大
+ 在做 compaction 的操作时，在新的 sstable 还没有生成之前，旧的 sstable 不能删除。所以 compaction 占用的空间要比实际存储的数据量多一倍。   如果 key 的更新过于频繁，会导致同一个 level 以及不同 level 的 sstable 中会存储多个相同的 key。  Leveled Compaction Strategy(LCS)  via http://www.</description>
+    </item>
+    
+    <item>
       <title>Paper: A critique of ANSI SQL isolation levels 笔记</title>
       <link>/notes/about_isolation/</link>
       <pubDate>Mon, 10 Sep 2018 00:00:00 +0000</pubDate>
       
       <guid>/notes/about_isolation/</guid>
       <description>P1(Dirty Read): 脏读 w1[x] ... r2[x] ...   txn1 修改了一行数据。（未 commit 之前） txn2 读到修改的值。（未commit 之前）  P2(Fuzz or Non-repeatable Read): 不可重读 r1[x] ... w2[x] ... c2 ... r1[x] ... c1   txn1 读了一个数据， txn2 修改这个数据，并 commit txn1 重新读这个数据，读到新的值。  P3(Phantom): 幻读 r1[P] ... w2[y in P] ... c2 ... r1[P] ... c1   txn1 读了一段满足某个 condition 的数据， txn2 修改了一条数据，使之满足或者不满足这个 condition（比如说删掉了一条满足 condition 的数据，新增了一条满足 condition 数据），并 commit。 txn1 重新读满足这个 condition 的数据，返回数据变化。  P2 可以看做是 P3 的特殊 case。</description>
+    </item>
+    
+    <item>
+      <title>JDBC loadbalance 模式的小坑</title>
+      <link>/notes/a-strange-behavior-in-jdbc-loadbalance-mode-using-tidb/</link>
+      <pubDate>Wed, 08 Aug 2018 22:38:50 +0800</pubDate>
+      
+      <guid>/notes/a-strange-behavior-in-jdbc-loadbalance-mode-using-tidb/</guid>
+      <description>昨天在写代码插入数据到 tidb 的时候，时不时报错说 connection closed。一直没找到原因。 今天梳理代码，发现了这个坑。
+用 jdbc 连接 tidb 的时候，
+ 配置了 jdbc:mysql:loadbalance 模式（后面有多台 tidb，暂时还没有 load balance，只能先通过这种方式来搞）。 然后 jdbc 连接中没有显式的配置用哪个库。  这个时候，mysql client 底层在做 loadblance 的时候，会把之前 connection 的状态 sync 到新的 connection 上。这里面包括了：
+ auto commit catalog isolation level max rows  void syncSessionState(Connection source, Connection target, boolean readOnly) throws SQLException { if (target != null) { target.setReadOnly(readOnly); } if (source == null || target == null) { return; } boolean prevUseLocalSessionState = source.</description>
+    </item>
+    
+    <item>
+      <title>TiKV scheduler 的流程图</title>
+      <link>/notes/tidb-scheduler/</link>
+      <pubDate>Thu, 10 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/tidb-scheduler/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Tikv 的参数调优</title>
+      <link>/notes/tikv-params-optimization/</link>
+      <pubDate>Sun, 08 Apr 2018 22:51:24 +0800</pubDate>
+      
+      <guid>/notes/tikv-params-optimization/</guid>
+      <description>Manual Compaction TiKV 有一个后台任务定期去对 region 做Compact，每次 100个 region。见：store.on_comact_check_tick。
+落到 RocksDB里面就是很多个 CompactRange 操作。见： compact.rs
+如果业务场景是频繁的写更新，一次 tick 就会产生多个 compact_range 操作。 而 RocksDB 在 CompactRange 时会做一次 flush。 如果某次 compact range 的次数过多，会引起 level-0 的sst 来不急 compaction，引起 write_stall。
+参考：
+ http://kernelmaker.github.io/Rocksdb_Study_4 http://kernelmaker.github.io/Rocksdb_Study_5 http://alexstocks.github.io/html/rocksdb.html  系统参数 fs： dirty_background_ratio 和 dirty_ratio
+参考：
+ https://www.jianshu.com/p/027f681f59e6  bytes-per-sync https://github.com/tikv/tikv/issues/2675</description>
+    </item>
+    
+    <item>
+      <title>TiDB 介绍</title>
+      <link>/posts/intro-to-tidb/</link>
+      <pubDate>Tue, 20 Mar 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/intro-to-tidb/</guid>
+      <description>概览 Storage - RocksDB Replication - Raft protocol Schedule - PD SQL Layer Transaction - 2PC/MVCC Monitoring - Prometheus &amp;amp;&amp;amp; Grafana  概览 HBase 出了什么问题
+ 可用性差  GC 恢复时间长  无跨行事务 - Mistake of Jeaf Dean  决定了它只合适做一个 KV 数据库   需要考虑什么
+ 一致性：我们是否需要保证整个系统的线性一致性，还是能容忍短时间的数据不一致，只支持最终一致性。 稳定性：我们能否保证系统 7 x 24 小时稳定运行。系统的可用性是 4 个 9，还有 5 个 9？如果出现了机器损坏等灾难情况，系统能否做的自动恢复。 扩展性：当数据持续增多，能否通过添加机器就自动做到数据再次平衡，并且不影响外部服务。 分布式事务：是否需要提供分布式事务支持，事务隔离等级需要支持到什么程度。  可用性
+ Rust  static language。 no GC。 Memory safe，avoid dangling pointer，memory leak。 Thread safe，no data race。 package manager。 C bindings，zero-cost。 not so easy to learn。 not so many libraries as Java or C++。  多副本（Raft）  数据写入只有大多数副本节点写入成功才算成功。 一个副本节点 down，可以切换到其他副本节点。   跨行事务 - 2PC</description>
+    </item>
+    
+    <item>
+      <title>TiDB 的 Update 操作</title>
+      <link>/notes/update-in-tidb/</link>
+      <pubDate>Wed, 28 Feb 2018 22:46:26 +0800</pubDate>
+      
+      <guid>/notes/update-in-tidb/</guid>
+      <description>今天突然想起来一个点：当提交过来的 Update 操作中涉及到了索引列，且列的新值与旧值相同，这个时候，不需要更新对应的索引数据。 好奇 TiDB 是否做了这个优化，于是过了一下对应的代码。
+涉及的代码包括：
+ https://github.com/pingcap/tidb/blob/master/executor/write.go https://github.com/pingcap/tidb/blob/master/table/tables/tables.go  大致流程是这样的，
+ 先通过 SelectPlan 把需要 update 的数据行从 TiKV 中拿出来，将行中需要修改的字段找出，标记为 assigned。（看到这里，我还以为 TiDB 没有做，差点就没忍住去提 Issue 了） 在 updateRecord 方法中，又进一步对上述被标记为 assigned 的字段做判定，判断是否真的被 modified 了。规则是：比较新值和旧值，如果不相等，才标记为 modified。 做完了上面这个事情，如果真的存在修改，再对表中的 OnUpdateNow 的字段做处理。 准备完数据后，接下来就是把 column 更新后的值写入到底层 Storage 中。这段代码在 Table.UpdateRecord 实现中。忽略 binlog 的处理，其实就是更新索引列的数据（删除旧的，增加新的），以及更新主表的数据。  就是不知道 Phoenix 做 Upsert 时，有没有这个优化。如果没有，那问题就大啦！ 每次 Upsert，无论数据是不是真的被修改掉，都需要去做 Write 操作。而 Phoenix 的跨行事务垃圾的很，很容易出问题。</description>
     </item>
     
     <item>
@@ -97,6 +184,49 @@ Section 3: Serializablility 首先说明了 SI 的问题：
     </item>
     
     <item>
+      <title>一个好的配置中心应该有什么</title>
+      <link>/notes/what-a-good-confserver-should-have/</link>
+      <pubDate>Tue, 13 Jun 2017 23:14:51 +0800</pubDate>
+      
+      <guid>/notes/what-a-good-confserver-should-have/</guid>
+      <description> 服务端  更改可以准实时同步到客户端，两种主要方式。  配置中心推送到客户端，实现方式？ 客户端对配置中心轮询。  完善的管理功能。  管理多个环境下多个服务的多个版本的配置。 提供 Typed Config Properties。 提供 USER 管理，GROUP 管理。不同 GROUP/USER 看到的是不同的环境和服务配置。 最好，配置中心可以和服务发现机制相结合，能够提供更多的功能。比如说： 灰度发布，A/B test，流量控制 等等。  能够知晓当前服务的状况。 比如说有某个服务有多少个客户端。 客户端使用的事哪个版本的配置。 能够知晓配置更新的状态。比如， 新的配置在哪些客户端生效了，哪些客户端没有响应，没响应的客户端要不要重新推送配置。 HA ?  HA 主要影响的是配置中心到底需要使用什么数据库。 比如说 MySQL, ETCD, ZK，或者其他。   客户端  可能需要针对不同语言实现不同的客户端。 客户端启动的时候，将自己注册到配置中心，表明自己对哪个服务的那个版本的配置感兴趣。 然后拉取最新的配置，缓存到本地内存。 保持和配置中心的连接，发送心跳信息，（TCP，或者HTTP WebSocket, 或者 Long Polling ） 配置中心有更新推送过来的时候，更新本地内存。 optional，定时去配置中心拉取配置。  调研  QConf: zk DisConf: zk Spring Cloud Config: 基于 git/file/vault Apollo: 携程开源的基于 eureka Netflix/archaius: a java library support config dynamic changed from external sources, like zk, etcd  </description>
+    </item>
+    
+    <item>
+      <title>why ruby is dying</title>
+      <link>/notes/why-ruby-is-dying/</link>
+      <pubDate>Sat, 24 Dec 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/why-ruby-is-dying/</guid>
+      <description>Lack of multi threads. Concurrency is hard, especially in ruby. Many other languages like Rust, Elixir, Scala, Clojure make multi-core programming easy. These fancy things cannot exists in Ruby because of GIL. Go http://awesome-ruby.com/#awesome-ruby-concurrency, and you can see only three libraries there, and difficult to use. Lack of basic type constraints. (One thing I like Elixir/Erlang most is optional type definitions.) Type is the new sexy:  Many languages based on JVM are typed.</description>
+    </item>
+    
+    <item>
+      <title>ROP 错误处理</title>
+      <link>/notes/railway-oriented-programming/</link>
+      <pubDate>Sun, 14 Aug 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/railway-oriented-programming/</guid>
+      <description>常见的错误处理方法 try-catch begin ## send post request rescue NetworkError =&amp;gt; e end return code ret = send_post_request() if ret.code != 0 return error else parse(ret.data) end 存在的问题 复杂的业务逻辑:
+ 验证用户输入 数据库访问 文件访问 网络问题 &amp;hellip;  如果在业务逻辑中，使用上述的处理方法，代码很容易变丑，添加各种 if 判断，各种 begin-rescue。
+Enter ROP(Railway Oriented Programming) =&amp;gt;
+如果 Validate 失败，就不执行 UpdateDb 操作， 如果 UpdateDb 失败，就不执行 SendEmail 操作。
+实现：
+Try = Struct.new(:ok, data_or_exception) class Try def pipe(&amp;amp;block) if !@ok return self end block.call(@data_or_exception) end end def validate(req) # do your validation Try.</description>
+    </item>
+    
+    <item>
+      <title>Elixir 问题总结</title>
+      <link>/posts/about-elixir/</link>
+      <pubDate>Mon, 20 Jun 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/about-elixir/</guid>
+      <description>Elixir 中的 try-catch Elixir 有三种异常类型：
+ :error, 由 Kernel.raise 产生 :throw, 由 Kernel.throw/1 产生 :exit, 由 Kernel.exit/1 产生  try-catch 中的子句中，
+try do do_something_that_may_fail(some_arg) rescue x in [ArgumentError] -&amp;gt; IO.puts &amp;#34;Invalid argument given&amp;#34; catch class, value -&amp;gt; IO.puts &amp;#34;#{class}caught #{value}&amp;#34; else value -&amp;gt; IO.puts &amp;#34;Success! The result was #{value}&amp;#34; after IO.puts &amp;#34;This is printed regardless if it failed or succeed&amp;#34; end  rescue 部分只能用来处理 :error 类型， 常见的包括： RuntimeError、ArgumentError、ErlangError，也可通过 Kernel.defexception/1 自定义类型。 catch 部分对这三种类型都可以处理，类型通过class 进行绑定（未指定 class 时，默认是 :throw）。 else 部分在未出错的情况下执行。 after 部分无论什么情况都会执行。  Erlang 中的 try-catch Erlang 有两个表达式来处理，一个是 catch，另一个是 try-catch。</description>
+    </item>
+    
+    <item>
       <title>毕业季找工作</title>
       <link>/notes/job-finding/</link>
       <pubDate>Mon, 21 Sep 2015 00:00:00 +0000</pubDate>
@@ -113,6 +243,63 @@ Section 3: Serializablility 首先说明了 SI 的问题：
     </item>
     
     <item>
+      <title>ES6 新特性</title>
+      <link>/posts/about-es6/</link>
+      <pubDate>Mon, 15 Jun 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/about-es6/</guid>
+      <description>Ref mozilla&amp;rsquo;s es6 in depth
+for-of loop Via https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/
+for-of 只是一个语法糖。 内部需要借助 iterator，凡是实现 iterator 接口的 object 都可以使用 for-of。
+所谓的 iterator 接口只是需要 object 包含一个 key 为 Symbol.iterator 的函数字段，该函数执行返回 iterator 对象。
+iterator 对象需要实现 next 方法，以及两个可选的方法： return 和 throw(exc)。
+如果在 for-of 过程中 break 或者 return 或者 exception 了， return 方法就会被调用。
+下面是一个简单的例子：（斐波那契数）
+class Fibonacci { constructor() { this.a = 0; this.b = 1; } [Symbol.iterator]() { return { next: () =&amp;gt; { const t = this.</description>
+    </item>
+    
+    <item>
+      <title>TLP in Scala</title>
+      <link>/notes/type-level-programming/</link>
+      <pubDate>Sat, 13 Jun 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/type-level-programming/</guid>
+      <description>Concepts  Dependent Type Abstract Type type keyword
+ Phantom Type, used as type constraints but never instantiated.
+ Implicit Parameter/Conversion
+  trait Printer[T] { def print(t: T): String } implicit val sp: Printer[Int] = new Printer[Int] { def print(i :Int) = i.toString } def foo[T](t: T)(implicit p: Printer[T]) = p.print(t)  Type Class  trait CanFoo[A] { def foos(x: A): String } case class Wrapper(wrapped: String) object WrapperCanFoo extends CanFoo[Wrapper] { def foos(x: Wrapper) = x.</description>
+    </item>
+    
+    <item>
+      <title>关于 Monad</title>
+      <link>/posts/about-monad/</link>
+      <pubDate>Wed, 24 Dec 2014 00:33:18 +0800</pubDate>
+      
+      <guid>/posts/about-monad/</guid>
+      <description>Monad 定义 一个monad包含三个东西： 1. 一个类型构造器M，它可以从类型a构造出类型M[a]。 2. 一个unit函数，将类型为a的值转换成类型M[a]，函数签名为： a =&amp;gt; M[a]。 3. 一个bind函数，通过函数a =&amp;gt; M[b]将一个M[a]转换成一个M[b]，函数签名：(M[a], a =&amp;gt; M[b]) =&amp;gt; M[b]。概念类似于flatMap。
+另一种构造方式 flatMap通常可以用map和flatten代替。 类似的概念，Monad中的bind函数可以用fmap和join定义。（fmap相当于map，join相当于flatten） - fmap，通过函数a =&amp;gt; b将一个M[a]转换成M[b]，函数签名：(M[a], a =&amp;gt; b) =&amp;gt; M[b]。 - join，将一个M[M[a]]转换成M[a]，函数签名：M[M[a]] =&amp;gt; M[a]。
+等价的概念：bind(m, f) = join(fmap(m, f))。
+Continuation Monad case class M[+A](in: (A =&amp;gt; Any) =&amp;gt; Any); def unit[A](x: A) = M { k: (A =&amp;gt; Any) =&amp;gt; k(x) } def bind[A, B](m: M[A], f: A =&amp;gt; M[B]): M[B] = M { k: (B =&amp;gt; Any) =&amp;gt; m.</description>
+    </item>
+    
+    <item>
+      <title>Ruby 元编程基础</title>
+      <link>/posts/meta-programming-in-ruby/</link>
+      <pubDate>Thu, 16 Oct 2014 00:14:07 +0800</pubDate>
+      
+      <guid>/posts/meta-programming-in-ruby/</guid>
+      <description>对象模型 Ruby 的 class 关键字更像是一个作用域操作符，而不是类型声明。 class 的核心任务是将你带到类的上下文中，让你可以在其中定义方法。
+对象能做的事情 Object#instance_variables() Object#methods() Object#singleton_methods() Object#class() BasicObject#instance_eval() Objecy#extend()  只有类能做的事情 Module#instance_methods() Module#method_defined?() Module#public_instance_methods() Module#public_method_defined?() Module#public_class_methods() Module#protected_instance_methods() Module#protected_method_defined?() Module#private_instance_methods() Module#private_method_defined?() Module#private_class_methods() Module#ancestors() Module#class_eval() Module#attr_*() # series ... Class#superclass() Module#include() Module#included() Module#extended()  调用方法的过程 在 ruby 中调用方法，需要执行以下两个步骤。
+1. 方法查找 向右一步，再向上：先向右一步，来到方法接受者所在的类，然后沿着类的祖先链向上找到给定的方法。
+其中需要注意的是，在类中包含模块时，模块是如何加入到类的祖先链中的。(Object 类中就包含了 Kernel 模块)
+2. 执行方法 执行方法时，需要知道哪个对象充当当前对象(亦即 self)。
+类/模块 定义中(任何方法定义之外)的 self 就是这个类/模块。
+扩展知识：顶级上下文、私有原则
+方法 动态方法 动态调用方法：利用 Object#send() 动态调用方法，也称 动态派发 例如：只调用那些名字匹配某种模式的方法
+动态定义方法：利用 Module#define_method()，为其提供一个 方法名 和一个 充当方法主体的块</description>
+    </item>
+    
+    <item>
       <title>关于 Y Combinator</title>
       <link>/posts/about-ycombinator/</link>
       <pubDate>Tue, 14 Oct 2014 22:59:26 +0000</pubDate>
@@ -122,6 +309,141 @@ Section 3: Serializablility 首先说明了 SI 的问题：
 当然，网络上有很多关于 Y Combinator 的东西，个人比较推荐：
  explanation from Mike Vanier，写的十分通俗易懂。 PLLC 这本书也有详细的推导过程。（推荐前几章，我只看了前几章&amp;hellip;）  Y Combinator for Lazy Evaluation  关于 Evaluation 的概念，参见 wiki - Evaluation Strategy
  (define Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x)))))) ; for a given function f (which is a non-recursive function like almost-factorial), ; the corresponding recursive function can be obtained ; first by computing (lambda (x) (f (x x))), ; and then applying this lambda expression to itself.</description>
+    </item>
+    
+    <item>
+      <title>[Structured Programming with Goto Statement] 笔记</title>
+      <link>/posts/goto-statement/</link>
+      <pubDate>Fri, 10 Oct 2014 23:04:30 +0800</pubDate>
+      
+      <guid>/posts/goto-statement/</guid>
+      <description>Structured Programming with goto Statements 是 Donald E. Knuth 于 1974 年的写作的一篇文章。 原始的 pdf 格式效果不好，互联网上存在一个 html 版本。
+文章试图以一种易于理解的方式说明 goto 的正反两面。 同时，为了说明 goto 不同的使用情况，文章还讨论了很多例子程序。
+goto 历史 从60年代开始，程序员开始避免使用 goto，尤其是在 Edsger Dijkstra 的 A Case against the GO TO Statement之后，goto 是有害的这一论调已经达成了广泛的共识。 然而程序员和语言的设计者仍然会需要 &amp;ldquo;goes/jump to&amp;rdquo; 这种类似 goto 的编程方式。
+一个搜索的例子 一个典型的程序：假设我们想搜索一个表 A[1] ... A[m]，其中的值各不相同；如果值 x 不在表中出现，我们想把它插入到其中。 另外，还假设另一个有数组 B，其中 B[i] 记录了我们搜索 A[i] 的次数。 我们可能会通过如下的程序来解决这个问题：
+Example 1
+for i:=1 step 1 until m do if A[i] = x then goto found fi; not found: i:= m + 1; m := i; A[i] := x; B[i] := 0; found: B[i] := B[i] + 1;  如果禁止使用 goto，可以这样做（把 for 循环展开为赋值和 while 循环）：</description>
+    </item>
+    
+    <item>
+      <title>Sinatra 应用的配置</title>
+      <link>/posts/config-in-sinatra/</link>
+      <pubDate>Thu, 09 Oct 2014 00:11:45 +0800</pubDate>
+      
+      <guid>/posts/config-in-sinatra/</guid>
+      <description>在 Sinatra 中，经常需要使用 set、enable、disable 这些函数来配置应用， 并在请求上下文通过 settings 访问这些配置。
+例如：
+# example 1 set :author, &amp;#34;XXX&amp;#34; get &amp;#34;/app/author&amp;#34; do &amp;#34;the author is &amp;#34; + settings.author end 也可以利用代码块来设置：
+# example 2 set(:author) do # do something here “XXX” end 同时，可以使用 Proc 访问其他设置选项：
+# example 3 set :app_info, Proc.new do &amp;#34;desc: &amp;#34; + &amp;#34;app about how to use set.&amp;#34; + author end 另外，传递一个哈希表给 set 函数，可以一次配置多个选项：
+# example 4 set author: &amp;#34;XXX&amp;#34;, app_info: Proc.</description>
+    </item>
+    
+    <item>
+      <title>勾股数与 Euclid&#39;s formula</title>
+      <link>/posts/euclid-formula/</link>
+      <pubDate>Thu, 10 Jul 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/euclid-formula/</guid>
+      <description>勾股定理想必大家都知道，勾股数就是勾股定理中的那三个数组成的数对，即 a2 + b2 = c2 中的 (a, b, c)。
+那 Euclid&amp;rsquo;s formula 是什么呢？维基上是这么解释的：给定两个正整数 m 和 n，其中 m &amp;gt; n，可以用 Euclid&amp;rsquo;s formula 来生成勾股数。
+公式如下：
+a = m2 - n2，b = 2mn，c = m2 + n2
+请注意，这个公式并不能生成所有的勾股数，但是使用另外一种方法就可以。
+生成所有勾股数  首先说明一下素勾股数的概念：如果勾股数 a, b, c 三者之间互质（最大公因数为1），那么就称之为素勾股数。 而所有的勾股数都可以由素勾股数乘以一个正整数 k 得到：k(a, b, c)，其中，(a, b, c) 是素勾股数。  那现在的问题就变成如何生成素勾股数了。方法还是 Euclid&amp;rsquo;s formula 。
+ 所有的素勾股数都可以由一对互质的整数 m 和 n（其中 m &amp;gt; n，且其中一个是偶数）通过 Euclid&amp;rsquo; formula 生成。
+ 通过 Euclid&amp;rsquo; formula 就可以生成所有的素勾股数。</description>
+    </item>
+    
+    <item>
+      <title>Packrat Parsing in Scala</title>
+      <link>/posts/packrat-parsing-in-scala/</link>
+      <pubDate>Mon, 26 May 2014 23:01:26 +0800</pubDate>
+      
+      <guid>/posts/packrat-parsing-in-scala/</guid>
+      <description>原文 Packrat Parsing in Scala
+ 解决回溯时重复解析的问题 为 Input 构造一个 Memo Cache，保存不同 Parsers 在 Input 不同位置上的结果； 回溯时，相同的 Parser 在相同 Input 位置上的结果就可以直接从 Memo 中返回。
+解决直接左递归问题 expr = expr &#39;+&#39; &#39;1&#39; | &#39;1&#39;   完成 seed parsing。 seed parsing 指的是左递归语法中的基本步骤，比如上述例子中 expr = &#39;1&#39;。 确定 seed parsing 之后，左递归的解析才可以在此基础上推演下去。 在 seed 基础上不断 grow，直到达到终点。  举个例子：上述文法在输入 1+1+1 上的表现。 1. input 的初始 Memo 为空，cache = { } 2. 完成 seed parsing 之后，cache = { [expr, 1] = 1 } 3.</description>
+    </item>
+    
+    <item>
+      <title>call/cc</title>
+      <link>/posts/call-cc/</link>
+      <pubDate>Sun, 23 Mar 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/call-cc/</guid>
+      <description>CPS 在利用 continuation 编程之前，需要认识一种编程风格：Continuation Passing Style(CPS)。 在 CPS 中，每一个过程（或者说函数）都接受一个额外的参数，这个参数代表了 对该过程调用结果的处理 。
+举个例子：
+以下这段代码以递归的形式计算前 n 个数的乘积。
+(define (factorial n) (if (= n 0) 1 ; NOT tail-recursive (* n (factorial (- n 1))))) 如何把它变成 CPS 形式的呢？
+首先给 factorial 加一个额外的参数 k， 这个 k 代表了当 factorial 调用结束后要执行的动作。
+; postfix a &amp;amp; to represent the cps version of a function (define (factorial&amp;amp; n k) ???) 接下来的唯一“复杂”的地方就是 (* n (factorial (- n 1))) 了。 这个表达式中，先有 (- n 1) 调用，然后是 factorial，乘法是最后一步计算。 需要做的同上：给 factorial 调用加上一个 k 参数。</description>
+    </item>
+    
+    <item>
+      <title>质数生成器在 Ruby 标准库中的实现</title>
+      <link>/posts/prime-generator-in-ruby-std/</link>
+      <pubDate>Mon, 09 Dec 2013 00:19:12 +0800</pubDate>
+      
+      <guid>/posts/prime-generator-in-ruby-std/</guid>
+      <description>如果你在 Project Euler 上做过题，你一定碰见过很多和质数相关的题目。 1. 判断一个数是否是质数， 2. 第XX个质数， 3. 前XX个数中的所有质数， 4. 质因数分解，
+最近，遇到了 Euler&amp;rsquo;s Totient function, 和质因数分解有些关系，心血来潮看了下 Ruby prime gem 的代码。
+质因数分解 质因数分解的代码异常简练，使用的是最简单直接的试除法，借助了质数生成器。
+生成器 质因数分解默认的生成器是 Prime::Generator23：正如名字所暗含的一样，Generator23 生成了所有不被2和3整除的数，代码的实现非常灵巧。
+ 我也是使用这种方法实现素数判断的，但代码远远不如它精简。好的代码可以提高 Programmer 的觉悟。
+ 但，一个数不被 2 和 3 整除不代表它就是素数，Generator23 只是一个伪素数生成器。 它的父类是 PseudoPrimeGenerator，PseudoPrimeGenerator 包含 Enumerable，实现了 each 方法；同时，作为父类，又提供 succ、next、rewind 抽象方法（Ruby 中没有抽象方法，这里只是借助其概念）。
+除了 Generator23，PseudoPrimeGenerator 还有两个子类， - EratosthenesGenerator - TrialDivisionGenerator
+生成器 - EratosthenesGenerator compute_primes 是这个生成器的核心。 该实现在基本的 Sieve of Eratosthenes 算法上做了两点改进： - 偶数直接筛掉。 - 只计算到不大于 sqrt(n).floor 的那个质数。</description>
+    </item>
+    
+    <item>
+      <title>尾递归和延续传递</title>
+      <link>/posts/tailcall-and-cps/</link>
+      <pubDate>Sat, 23 Nov 2013 00:22:07 +0800</pubDate>
+      
+      <guid>/posts/tailcall-and-cps/</guid>
+      <description>本文源自于 Daniel P.Friedman 的一篇讲稿 - 编程语言研究在程序员教育中所扮演的角色 。
+ 上一周，我和几个大学朋友做了一次简单的 workshop，分享的是尾递归和延续传递。
+从递归说起 首先来看看一个递归形式的 sum 程序：
+function sum(n) { if (0 == n) { return 0; } else { return n + sum(n - 1); } }  等同的尾递归形式如下：
+function sum(n, acc) { if (0 == n) { return acc; } else { return sum(n - 1, acc + n); } }  由于 nodejs 没有尾递归优化，当 n 超过调用栈的最大值时， 上述两种形式的代码都会产生 RangeError: Maximum call stack size exceeded 的错误。</description>
+    </item>
+    
+    <item>
+      <title>Scala 基础笔记</title>
+      <link>/notes/scala-basics/</link>
+      <pubDate>Sat, 10 Aug 2013 00:25:23 +0800</pubDate>
+      
+      <guid>/notes/scala-basics/</guid>
+      <description>控制结构和函数  赋值动作本身是没有值的。  var a = 1 scala&amp;gt; val nn = (a+=1) nn: Unit = ()  scala 支持函数。只要函数不是递归的，就不需要指定返回类型。 异常中 throw 有特殊的类型 Nothing。  类、对象以及特质  下面代码中，_ 是什么意思？  class Person { var name: String = _ }  类型投影？ 在内嵌类中访问外部类？ 定义只读属性时,  val attr private var privateAttr + def attar = privateAttr   选择哪个？其他更好的方案？
+ 类的伴生对象，可以访问类的私有成员。 类和其伴生对象可以相互访问私有特性？ 单例对象和伴生对象的关系？ 扩展类  使用 extends 关键字扩展类。 可以将类、字段、方法声明为 final，以确保其不会被重写。注：java 中的 final 意思与 val 类似，表示不可变。  重写方法  使用 override 修饰符来重写一个 非抽象方法 （那抽象方法？）。 使用 super 关键字来调用超类的方法。  类型检查和转换  o.</description>
+    </item>
+    
+    <item>
+      <title>Loop and a half 问题</title>
+      <link>/notes/loop-and-a-half/</link>
+      <pubDate>Fri, 29 Mar 2013 00:31:12 +0800</pubDate>
+      
+      <guid>/notes/loop-and-a-half/</guid>
+      <description>大部分的循环形式可以总结如下：
+A: S; if B then goto Z fi; T; goto A; Z: // do other stuff  当 S 为空时，可以写成 while 循环：until B do T;； 当 T 为空时，可以写成 do-while 循环：repeat S; until B;。
+但是，当 S 和 T 都不为空时，无论是写成 while 还是 do-while 总会有多余的一部分在循环之外执行：
+S; until B do begin T; S; end  inversedT; repeat T; S; until B;  这就是所谓的 loop and a half 问题。（相信大家在编程过程中都有遇到过）
+诸如：repeat begin S; when B exit; T; end 中这样的 loop/break 控制语句被添加到现代编程语言中，以解决 消除 goto 所带来的不便。</description>
+    </item>
+    
+    <item>
+      <title>命令行构建工具 - Thor</title>
+      <link>/posts/thor-usage/</link>
+      <pubDate>Sat, 09 Mar 2013 00:17:18 +0800</pubDate>
+      
+      <guid>/posts/thor-usage/</guid>
+      <description>Thor 是一个用来构建强大命令行的工具包，诸如 Bundler、Rails、Vagrant 这样的项目都在使用它。
+基本使用 Thor 类会被封装成带有多个命令的 CLI，比如 git、bundler。 类的公有方法表征命令。
+class MyCLI &amp;lt; Thor desc &amp;#34;hello NAME&amp;#34;, &amp;#34;say hello to NAME&amp;#34; def hello(name) puts &amp;#34;Hello #{name}&amp;#34; end end 有了上面的类，然后调用 MyCLI.start(ARGV)，CLI 就可以执行了。
+接下来的例子，我会假设当前目录下有一个叫 my_cli 的 ruby 源文件，内容大致是这样的。
+require &amp;#34;thor&amp;#34; class MyCLI &amp;lt; Thor # contents of the Thor class end MyCLI.start(ARGV) 如果传递给 start 的参数列表是空的，Thor 会打印出 CLI 的帮助信息。 帮助信息会自动使用 CLI 的名称。
+$ ruby ./my_cli Commands: my_cli hello NAME # say hello to NAME my_cli help [COMMAND] # Describe available commands or one specific command 带参数执行 hello 命令，就会调用 Thor 类中相应的方法。</description>
     </item>
     
   </channel>

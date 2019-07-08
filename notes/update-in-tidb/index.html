@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>TiDB 的 Update 操作 | Give me five</title>
+    <meta name="DC.Title" content="TiDB 的 Update 操作">
+  
+
+  
+    <meta name="DC.Date" content="2018/02/28">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="今天突然想起来一个点：当提交过来的 Update 操作中涉及到了索引列，且列的新值与旧值相同，这个时候，不需要更新对应的索引数据。 好奇 TiDB 是否做了这个优化，于是过了一下对应的代码。
+涉及的代码包括：
+ https://github.com/pingcap/tidb/blob/master/executor/write.go https://github.com/pingcap/tidb/blob/master/table/tables/tables.go  大致流程是这样的，
+ 先通过 SelectPlan 把需要 update 的数据行从 TiKV 中拿出来，将行中需要修改的字段找出，标记为 assigned。（看到这里，我还以为 TiDB 没有做，差点就没忍住去提 Issue 了） 在 updateRecord 方法中，又进一步对上述被标记为 assigned 的字段做判定，判断是否真的被 modified 了。规则是：比较新值和旧值，如果不相等，才标记为 modified。 做完了上面这个事情，如果真的存在修改，再对表中的 OnUpdateNow 的字段做处理。 准备完数据后，接下来就是把 column 更新后的值写入到底层 Storage 中。这段代码在 Table.UpdateRecord 实现中。忽略 binlog 的处理，其实就是更新索引列的数据（删除旧的，增加新的），以及更新主表的数据。  就是不知道 Phoenix 做 Upsert 时，有没有这个优化。如果没有，那问题就大啦！ 每次 Upsert，无论数据是不是真的被修改掉，都需要去做 Write 操作。而 Phoenix 的跨行事务垃圾的很，很容易出问题。">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/update-in-tidb/">
+  
+
+  
+    <meta name="keywords" content="tidb,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>TiDB 的 Update 操作</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2018/02/28 
+    
+
+    
+</header>
+
+<article>
+<p>今天突然想起来一个点：当提交过来的 Update 操作中涉及到了索引列，且列的新值与旧值相同，这个时候，不需要更新对应的索引数据。
+好奇 TiDB 是否做了这个优化，于是过了一下对应的代码。</p>
+
+<p>涉及的代码包括：</p>
+
+<ul>
+<li><a href="https://github.com/pingcap/tidb/blob/master/executor/write.go">https://github.com/pingcap/tidb/blob/master/executor/write.go</a></li>
+<li><a href="https://github.com/pingcap/tidb/blob/master/table/tables/tables.go">https://github.com/pingcap/tidb/blob/master/table/tables/tables.go</a></li>
+</ul>
+
+<p>大致流程是这样的，</p>
+
+<ol>
+<li>先通过  <code>SelectPlan</code> 把需要 <code>update</code> 的数据行从 TiKV 中拿出来，将行中需要修改的字段找出，标记为 assigned。（看到这里，我还以为 TiDB 没有做，差点就没忍住去提 Issue 了）</li>
+<li>在 <code>updateRecord</code> 方法中，又进一步对上述被标记为 assigned 的字段做判定，判断是否真的被 modified 了。规则是：比较新值和旧值，如果不相等，才标记为 modified。</li>
+<li>做完了上面这个事情，如果真的存在修改，再对表中的 <code>OnUpdateNow</code> 的字段做处理。</li>
+<li>准备完数据后，接下来就是把 column 更新后的值写入到底层 Storage 中。这段代码在 <code>Table.UpdateRecord</code> 实现中。忽略 binlog 的处理，其实就是更新索引列的数据（删除旧的，增加新的），以及更新主表的数据。</li>
+</ol>
+
+<p>就是不知道 Phoenix 做 Upsert 时，有没有这个优化。如果没有，那问题就大啦！
+每次 Upsert，无论数据是不是真的被修改掉，都需要去做 Write 操作。而 Phoenix 的跨行事务垃圾的很，很容易出问题。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

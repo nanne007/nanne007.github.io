@@ -26,6 +26,33 @@ TiDB 慢日志配置 TiDB 有两个选项用来配置慢 SQL 日志：
     </item>
     
     <item>
+      <title>LSM 的 Compaction 策略</title>
+      <link>/posts/lsm-tree-compaction-strategy/</link>
+      <pubDate>Tue, 23 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/lsm-tree-compaction-strategy/</guid>
+      <description>via http://www.scylladb.com/2018/01/17/compaction-series-space-amplification/
+ Size-Tiered Compaction Strategy(STCS) memtable 定期的刷新到磁盘，成为一个一个比较小的 sstable。
+当这些小的 sstable 的数量达到一定个数（比如说4个）时，这四个 sstable 会被 compact 成一个稍大些的 sstable。
+当稍大些的 sstable 的数量又达到一定个数时，又会被一起 compact 成更大的 sstable。
+ 实际上要复杂些，因为多个 sstable compact 在一起，可能变得更小。假如，这些 sstable 里面 key 的重复率比较高（key 的更新频率高），compact 后的 sstable 的 key 数量不会增加太多。
+ 带来的问题 存储放大
+ 在做 compaction 的操作时，在新的 sstable 还没有生成之前，旧的 sstable 不能删除。所以 compaction 占用的空间要比实际存储的数据量多一倍。   如果 key 的更新过于频繁，会导致同一个 level 以及不同 level 的 sstable 中会存储多个相同的 key。  Leveled Compaction Strategy(LCS)  via http://www.</description>
+    </item>
+    
+    <item>
+      <title>TiDB 介绍</title>
+      <link>/posts/intro-to-tidb/</link>
+      <pubDate>Tue, 20 Mar 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/intro-to-tidb/</guid>
+      <description>概览 Storage - RocksDB Replication - Raft protocol Schedule - PD SQL Layer Transaction - 2PC/MVCC Monitoring - Prometheus &amp;amp;&amp;amp; Grafana  概览 HBase 出了什么问题
+ 可用性差  GC 恢复时间长  无跨行事务 - Mistake of Jeaf Dean  决定了它只合适做一个 KV 数据库   需要考虑什么
+ 一致性：我们是否需要保证整个系统的线性一致性，还是能容忍短时间的数据不一致，只支持最终一致性。 稳定性：我们能否保证系统 7 x 24 小时稳定运行。系统的可用性是 4 个 9，还有 5 个 9？如果出现了机器损坏等灾难情况，系统能否做的自动恢复。 扩展性：当数据持续增多，能否通过添加机器就自动做到数据再次平衡，并且不影响外部服务。 分布式事务：是否需要提供分布式事务支持，事务隔离等级需要支持到什么程度。  可用性
+ Rust  static language。 no GC。 Memory safe，avoid dangling pointer，memory leak。 Thread safe，no data race。 package manager。 C bindings，zero-cost。 not so easy to learn。 not so many libraries as Java or C++。  多副本（Raft）  数据写入只有大多数副本节点写入成功才算成功。 一个副本节点 down，可以切换到其他副本节点。   跨行事务 - 2PC</description>
+    </item>
+    
+    <item>
       <title>再见，2017</title>
       <link>/posts/goodbye-2017/</link>
       <pubDate>Mon, 01 Jan 2018 00:00:00 +0000</pubDate>
@@ -46,6 +73,62 @@ TiDB 慢日志配置 TiDB 有两个选项用来配置慢 SQL 日志：
     </item>
     
     <item>
+      <title>Elixir 问题总结</title>
+      <link>/posts/about-elixir/</link>
+      <pubDate>Mon, 20 Jun 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/about-elixir/</guid>
+      <description>Elixir 中的 try-catch Elixir 有三种异常类型：
+ :error, 由 Kernel.raise 产生 :throw, 由 Kernel.throw/1 产生 :exit, 由 Kernel.exit/1 产生  try-catch 中的子句中，
+try do do_something_that_may_fail(some_arg) rescue x in [ArgumentError] -&amp;gt; IO.puts &amp;#34;Invalid argument given&amp;#34; catch class, value -&amp;gt; IO.puts &amp;#34;#{class}caught #{value}&amp;#34; else value -&amp;gt; IO.puts &amp;#34;Success! The result was #{value}&amp;#34; after IO.puts &amp;#34;This is printed regardless if it failed or succeed&amp;#34; end  rescue 部分只能用来处理 :error 类型， 常见的包括： RuntimeError、ArgumentError、ErlangError，也可通过 Kernel.defexception/1 自定义类型。 catch 部分对这三种类型都可以处理，类型通过class 进行绑定（未指定 class 时，默认是 :throw）。 else 部分在未出错的情况下执行。 after 部分无论什么情况都会执行。  Erlang 中的 try-catch Erlang 有两个表达式来处理，一个是 catch，另一个是 try-catch。</description>
+    </item>
+    
+    <item>
+      <title>ES6 新特性</title>
+      <link>/posts/about-es6/</link>
+      <pubDate>Mon, 15 Jun 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/about-es6/</guid>
+      <description>Ref mozilla&amp;rsquo;s es6 in depth
+for-of loop Via https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/
+for-of 只是一个语法糖。 内部需要借助 iterator，凡是实现 iterator 接口的 object 都可以使用 for-of。
+所谓的 iterator 接口只是需要 object 包含一个 key 为 Symbol.iterator 的函数字段，该函数执行返回 iterator 对象。
+iterator 对象需要实现 next 方法，以及两个可选的方法： return 和 throw(exc)。
+如果在 for-of 过程中 break 或者 return 或者 exception 了， return 方法就会被调用。
+下面是一个简单的例子：（斐波那契数）
+class Fibonacci { constructor() { this.a = 0; this.b = 1; } [Symbol.iterator]() { return { next: () =&amp;gt; { const t = this.</description>
+    </item>
+    
+    <item>
+      <title>关于 Monad</title>
+      <link>/posts/about-monad/</link>
+      <pubDate>Wed, 24 Dec 2014 00:33:18 +0800</pubDate>
+      
+      <guid>/posts/about-monad/</guid>
+      <description>Monad 定义 一个monad包含三个东西： 1. 一个类型构造器M，它可以从类型a构造出类型M[a]。 2. 一个unit函数，将类型为a的值转换成类型M[a]，函数签名为： a =&amp;gt; M[a]。 3. 一个bind函数，通过函数a =&amp;gt; M[b]将一个M[a]转换成一个M[b]，函数签名：(M[a], a =&amp;gt; M[b]) =&amp;gt; M[b]。概念类似于flatMap。
+另一种构造方式 flatMap通常可以用map和flatten代替。 类似的概念，Monad中的bind函数可以用fmap和join定义。（fmap相当于map，join相当于flatten） - fmap，通过函数a =&amp;gt; b将一个M[a]转换成M[b]，函数签名：(M[a], a =&amp;gt; b) =&amp;gt; M[b]。 - join，将一个M[M[a]]转换成M[a]，函数签名：M[M[a]] =&amp;gt; M[a]。
+等价的概念：bind(m, f) = join(fmap(m, f))。
+Continuation Monad case class M[+A](in: (A =&amp;gt; Any) =&amp;gt; Any); def unit[A](x: A) = M { k: (A =&amp;gt; Any) =&amp;gt; k(x) } def bind[A, B](m: M[A], f: A =&amp;gt; M[B]): M[B] = M { k: (B =&amp;gt; Any) =&amp;gt; m.</description>
+    </item>
+    
+    <item>
+      <title>Ruby 元编程基础</title>
+      <link>/posts/meta-programming-in-ruby/</link>
+      <pubDate>Thu, 16 Oct 2014 00:14:07 +0800</pubDate>
+      
+      <guid>/posts/meta-programming-in-ruby/</guid>
+      <description>对象模型 Ruby 的 class 关键字更像是一个作用域操作符，而不是类型声明。 class 的核心任务是将你带到类的上下文中，让你可以在其中定义方法。
+对象能做的事情 Object#instance_variables() Object#methods() Object#singleton_methods() Object#class() BasicObject#instance_eval() Objecy#extend()  只有类能做的事情 Module#instance_methods() Module#method_defined?() Module#public_instance_methods() Module#public_method_defined?() Module#public_class_methods() Module#protected_instance_methods() Module#protected_method_defined?() Module#private_instance_methods() Module#private_method_defined?() Module#private_class_methods() Module#ancestors() Module#class_eval() Module#attr_*() # series ... Class#superclass() Module#include() Module#included() Module#extended()  调用方法的过程 在 ruby 中调用方法，需要执行以下两个步骤。
+1. 方法查找 向右一步，再向上：先向右一步，来到方法接受者所在的类，然后沿着类的祖先链向上找到给定的方法。
+其中需要注意的是，在类中包含模块时，模块是如何加入到类的祖先链中的。(Object 类中就包含了 Kernel 模块)
+2. 执行方法 执行方法时，需要知道哪个对象充当当前对象(亦即 self)。
+类/模块 定义中(任何方法定义之外)的 self 就是这个类/模块。
+扩展知识：顶级上下文、私有原则
+方法 动态方法 动态调用方法：利用 Object#send() 动态调用方法，也称 动态派发 例如：只调用那些名字匹配某种模式的方法
+动态定义方法：利用 Module#define_method()，为其提供一个 方法名 和一个 充当方法主体的块</description>
+    </item>
+    
+    <item>
       <title>关于 Y Combinator</title>
       <link>/posts/about-ycombinator/</link>
       <pubDate>Tue, 14 Oct 2014 22:59:26 +0000</pubDate>
@@ -55,6 +138,118 @@ TiDB 慢日志配置 TiDB 有两个选项用来配置慢 SQL 日志：
 当然，网络上有很多关于 Y Combinator 的东西，个人比较推荐：
  explanation from Mike Vanier，写的十分通俗易懂。 PLLC 这本书也有详细的推导过程。（推荐前几章，我只看了前几章&amp;hellip;）  Y Combinator for Lazy Evaluation  关于 Evaluation 的概念，参见 wiki - Evaluation Strategy
  (define Y (lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x)))))) ; for a given function f (which is a non-recursive function like almost-factorial), ; the corresponding recursive function can be obtained ; first by computing (lambda (x) (f (x x))), ; and then applying this lambda expression to itself.</description>
+    </item>
+    
+    <item>
+      <title>[Structured Programming with Goto Statement] 笔记</title>
+      <link>/posts/goto-statement/</link>
+      <pubDate>Fri, 10 Oct 2014 23:04:30 +0800</pubDate>
+      
+      <guid>/posts/goto-statement/</guid>
+      <description>Structured Programming with goto Statements 是 Donald E. Knuth 于 1974 年的写作的一篇文章。 原始的 pdf 格式效果不好，互联网上存在一个 html 版本。
+文章试图以一种易于理解的方式说明 goto 的正反两面。 同时，为了说明 goto 不同的使用情况，文章还讨论了很多例子程序。
+goto 历史 从60年代开始，程序员开始避免使用 goto，尤其是在 Edsger Dijkstra 的 A Case against the GO TO Statement之后，goto 是有害的这一论调已经达成了广泛的共识。 然而程序员和语言的设计者仍然会需要 &amp;ldquo;goes/jump to&amp;rdquo; 这种类似 goto 的编程方式。
+一个搜索的例子 一个典型的程序：假设我们想搜索一个表 A[1] ... A[m]，其中的值各不相同；如果值 x 不在表中出现，我们想把它插入到其中。 另外，还假设另一个有数组 B，其中 B[i] 记录了我们搜索 A[i] 的次数。 我们可能会通过如下的程序来解决这个问题：
+Example 1
+for i:=1 step 1 until m do if A[i] = x then goto found fi; not found: i:= m + 1; m := i; A[i] := x; B[i] := 0; found: B[i] := B[i] + 1;  如果禁止使用 goto，可以这样做（把 for 循环展开为赋值和 while 循环）：</description>
+    </item>
+    
+    <item>
+      <title>Sinatra 应用的配置</title>
+      <link>/posts/config-in-sinatra/</link>
+      <pubDate>Thu, 09 Oct 2014 00:11:45 +0800</pubDate>
+      
+      <guid>/posts/config-in-sinatra/</guid>
+      <description>在 Sinatra 中，经常需要使用 set、enable、disable 这些函数来配置应用， 并在请求上下文通过 settings 访问这些配置。
+例如：
+# example 1 set :author, &amp;#34;XXX&amp;#34; get &amp;#34;/app/author&amp;#34; do &amp;#34;the author is &amp;#34; + settings.author end 也可以利用代码块来设置：
+# example 2 set(:author) do # do something here “XXX” end 同时，可以使用 Proc 访问其他设置选项：
+# example 3 set :app_info, Proc.new do &amp;#34;desc: &amp;#34; + &amp;#34;app about how to use set.&amp;#34; + author end 另外，传递一个哈希表给 set 函数，可以一次配置多个选项：
+# example 4 set author: &amp;#34;XXX&amp;#34;, app_info: Proc.</description>
+    </item>
+    
+    <item>
+      <title>勾股数与 Euclid&#39;s formula</title>
+      <link>/posts/euclid-formula/</link>
+      <pubDate>Thu, 10 Jul 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/euclid-formula/</guid>
+      <description>勾股定理想必大家都知道，勾股数就是勾股定理中的那三个数组成的数对，即 a2 + b2 = c2 中的 (a, b, c)。
+那 Euclid&amp;rsquo;s formula 是什么呢？维基上是这么解释的：给定两个正整数 m 和 n，其中 m &amp;gt; n，可以用 Euclid&amp;rsquo;s formula 来生成勾股数。
+公式如下：
+a = m2 - n2，b = 2mn，c = m2 + n2
+请注意，这个公式并不能生成所有的勾股数，但是使用另外一种方法就可以。
+生成所有勾股数  首先说明一下素勾股数的概念：如果勾股数 a, b, c 三者之间互质（最大公因数为1），那么就称之为素勾股数。 而所有的勾股数都可以由素勾股数乘以一个正整数 k 得到：k(a, b, c)，其中，(a, b, c) 是素勾股数。  那现在的问题就变成如何生成素勾股数了。方法还是 Euclid&amp;rsquo;s formula 。
+ 所有的素勾股数都可以由一对互质的整数 m 和 n（其中 m &amp;gt; n，且其中一个是偶数）通过 Euclid&amp;rsquo; formula 生成。
+ 通过 Euclid&amp;rsquo; formula 就可以生成所有的素勾股数。</description>
+    </item>
+    
+    <item>
+      <title>Packrat Parsing in Scala</title>
+      <link>/posts/packrat-parsing-in-scala/</link>
+      <pubDate>Mon, 26 May 2014 23:01:26 +0800</pubDate>
+      
+      <guid>/posts/packrat-parsing-in-scala/</guid>
+      <description>原文 Packrat Parsing in Scala
+ 解决回溯时重复解析的问题 为 Input 构造一个 Memo Cache，保存不同 Parsers 在 Input 不同位置上的结果； 回溯时，相同的 Parser 在相同 Input 位置上的结果就可以直接从 Memo 中返回。
+解决直接左递归问题 expr = expr &#39;+&#39; &#39;1&#39; | &#39;1&#39;   完成 seed parsing。 seed parsing 指的是左递归语法中的基本步骤，比如上述例子中 expr = &#39;1&#39;。 确定 seed parsing 之后，左递归的解析才可以在此基础上推演下去。 在 seed 基础上不断 grow，直到达到终点。  举个例子：上述文法在输入 1+1+1 上的表现。 1. input 的初始 Memo 为空，cache = { } 2. 完成 seed parsing 之后，cache = { [expr, 1] = 1 } 3.</description>
+    </item>
+    
+    <item>
+      <title>call/cc</title>
+      <link>/posts/call-cc/</link>
+      <pubDate>Sun, 23 Mar 2014 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/call-cc/</guid>
+      <description>CPS 在利用 continuation 编程之前，需要认识一种编程风格：Continuation Passing Style(CPS)。 在 CPS 中，每一个过程（或者说函数）都接受一个额外的参数，这个参数代表了 对该过程调用结果的处理 。
+举个例子：
+以下这段代码以递归的形式计算前 n 个数的乘积。
+(define (factorial n) (if (= n 0) 1 ; NOT tail-recursive (* n (factorial (- n 1))))) 如何把它变成 CPS 形式的呢？
+首先给 factorial 加一个额外的参数 k， 这个 k 代表了当 factorial 调用结束后要执行的动作。
+; postfix a &amp;amp; to represent the cps version of a function (define (factorial&amp;amp; n k) ???) 接下来的唯一“复杂”的地方就是 (* n (factorial (- n 1))) 了。 这个表达式中，先有 (- n 1) 调用，然后是 factorial，乘法是最后一步计算。 需要做的同上：给 factorial 调用加上一个 k 参数。</description>
+    </item>
+    
+    <item>
+      <title>质数生成器在 Ruby 标准库中的实现</title>
+      <link>/posts/prime-generator-in-ruby-std/</link>
+      <pubDate>Mon, 09 Dec 2013 00:19:12 +0800</pubDate>
+      
+      <guid>/posts/prime-generator-in-ruby-std/</guid>
+      <description>如果你在 Project Euler 上做过题，你一定碰见过很多和质数相关的题目。 1. 判断一个数是否是质数， 2. 第XX个质数， 3. 前XX个数中的所有质数， 4. 质因数分解，
+最近，遇到了 Euler&amp;rsquo;s Totient function, 和质因数分解有些关系，心血来潮看了下 Ruby prime gem 的代码。
+质因数分解 质因数分解的代码异常简练，使用的是最简单直接的试除法，借助了质数生成器。
+生成器 质因数分解默认的生成器是 Prime::Generator23：正如名字所暗含的一样，Generator23 生成了所有不被2和3整除的数，代码的实现非常灵巧。
+ 我也是使用这种方法实现素数判断的，但代码远远不如它精简。好的代码可以提高 Programmer 的觉悟。
+ 但，一个数不被 2 和 3 整除不代表它就是素数，Generator23 只是一个伪素数生成器。 它的父类是 PseudoPrimeGenerator，PseudoPrimeGenerator 包含 Enumerable，实现了 each 方法；同时，作为父类，又提供 succ、next、rewind 抽象方法（Ruby 中没有抽象方法，这里只是借助其概念）。
+除了 Generator23，PseudoPrimeGenerator 还有两个子类， - EratosthenesGenerator - TrialDivisionGenerator
+生成器 - EratosthenesGenerator compute_primes 是这个生成器的核心。 该实现在基本的 Sieve of Eratosthenes 算法上做了两点改进： - 偶数直接筛掉。 - 只计算到不大于 sqrt(n).floor 的那个质数。</description>
+    </item>
+    
+    <item>
+      <title>尾递归和延续传递</title>
+      <link>/posts/tailcall-and-cps/</link>
+      <pubDate>Sat, 23 Nov 2013 00:22:07 +0800</pubDate>
+      
+      <guid>/posts/tailcall-and-cps/</guid>
+      <description>本文源自于 Daniel P.Friedman 的一篇讲稿 - 编程语言研究在程序员教育中所扮演的角色 。
+ 上一周，我和几个大学朋友做了一次简单的 workshop，分享的是尾递归和延续传递。
+从递归说起 首先来看看一个递归形式的 sum 程序：
+function sum(n) { if (0 == n) { return 0; } else { return n + sum(n - 1); } }  等同的尾递归形式如下：
+function sum(n, acc) { if (0 == n) { return acc; } else { return sum(n - 1, acc + n); } }  由于 nodejs 没有尾递归优化，当 n 超过调用栈的最大值时， 上述两种形式的代码都会产生 RangeError: Maximum call stack size exceeded 的错误。</description>
+    </item>
+    
+    <item>
+      <title>命令行构建工具 - Thor</title>
+      <link>/posts/thor-usage/</link>
+      <pubDate>Sat, 09 Mar 2013 00:17:18 +0800</pubDate>
+      
+      <guid>/posts/thor-usage/</guid>
+      <description>Thor 是一个用来构建强大命令行的工具包，诸如 Bundler、Rails、Vagrant 这样的项目都在使用它。
+基本使用 Thor 类会被封装成带有多个命令的 CLI，比如 git、bundler。 类的公有方法表征命令。
+class MyCLI &amp;lt; Thor desc &amp;#34;hello NAME&amp;#34;, &amp;#34;say hello to NAME&amp;#34; def hello(name) puts &amp;#34;Hello #{name}&amp;#34; end end 有了上面的类，然后调用 MyCLI.start(ARGV)，CLI 就可以执行了。
+接下来的例子，我会假设当前目录下有一个叫 my_cli 的 ruby 源文件，内容大致是这样的。
+require &amp;#34;thor&amp;#34; class MyCLI &amp;lt; Thor # contents of the Thor class end MyCLI.start(ARGV) 如果传递给 start 的参数列表是空的，Thor 会打印出 CLI 的帮助信息。 帮助信息会自动使用 CLI 的名称。
+$ ruby ./my_cli Commands: my_cli hello NAME # say hello to NAME my_cli help [COMMAND] # Describe available commands or one specific command 带参数执行 hello 命令，就会调用 Thor 类中相应的方法。</description>
     </item>
     
   </channel>

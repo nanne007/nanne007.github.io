@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>why ruby is dying | Give me five</title>
+    <meta name="DC.Title" content="why ruby is dying">
+  
+
+  
+    <meta name="DC.Date" content="2016/12/24">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="Lack of multi threads. Concurrency is hard, especially in ruby. Many other languages like Rust, Elixir, Scala, Clojure make multi-core programming easy. These fancy things cannot exists in Ruby because of GIL. Go http://awesome-ruby.com/#awesome-ruby-concurrency, and you can see only three libraries there, and difficult to use. Lack of basic type constraints. (One thing I like Elixir/Erlang most is optional type definitions.) Type is the new sexy:  Many languages based on JVM are typed.">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/why-ruby-is-dying/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>why ruby is dying</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2016/12/24 
+    
+
+    
+</header>
+
+<article>
+<ol>
+<li>Lack of multi threads.
+Concurrency is hard, especially in ruby. Many other languages like Rust, Elixir, Scala, Clojure make multi-core programming easy. These fancy things cannot exists in Ruby because of GIL. Go <a href="http://awesome-ruby.com/#awesome-ruby-concurrency">http://awesome-ruby.com/#awesome-ruby-concurrency</a>, and you can see only three libraries there, and difficult to use.</li>
+<li>Lack of basic type constraints. (One thing I like Elixir/Erlang most is  optional type definitions.) Type is the new sexy:
+
+<ul>
+<li>Many languages based on JVM are typed.</li>
+<li>Many languages based on LLVM are typed.</li>
+<li>Many languages based on BEAM are typed.</li>
+</ul></li>
+<li>Too many magic boxes. Yeah, I mean meta-programming.</li>
+<li>Pool docs. I hate it. Writing it is hard, Reading it is harder.</li>
+<li>No new sexy projects. RoR is too big to fall, and it&rsquo;s going to fall.</li>
+<li>The community is less active.</li>
+<li>I will not criticize the performance, as Ruby is nothing to do with it.</li>
+<li>To be continued.</li>
+</ol>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

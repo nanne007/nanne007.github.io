@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>ROP 错误处理 | Give me five</title>
+    <meta name="DC.Title" content="ROP 错误处理">
+  
+
+  
+    <meta name="DC.Date" content="2016/08/14">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="常见的错误处理方法 try-catch begin ## send post request rescue NetworkError =&amp;gt; e end return code ret = send_post_request() if ret.code != 0 return error else parse(ret.data) end 存在的问题 复杂的业务逻辑:
+ 验证用户输入 数据库访问 文件访问 网络问题 &amp;hellip;  如果在业务逻辑中，使用上述的处理方法，代码很容易变丑，添加各种 if 判断，各种 begin-rescue。
+Enter ROP(Railway Oriented Programming) =&amp;gt;
+如果 Validate 失败，就不执行 UpdateDb 操作， 如果 UpdateDb 失败，就不执行 SendEmail 操作。
+实现：
+Try = Struct.new(:ok, data_or_exception) class Try def pipe(&amp;amp;block) if !@ok return self end block.call(@data_or_exception) end end def validate(req) # do your validation Try.">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/railway-oriented-programming/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>ROP 错误处理</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2016/08/14 
+    
+
+    
+</header>
+
+<article>
+
+
+<h3 id="常见的错误处理方法">常见的错误处理方法</h3>
+
+<h4 id="try-catch">try-catch</h4>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">begin</span>
+  <span style="color:#080;background-color:#0f140f;font-style:italic">## send post request</span>
+<span style="color:#fb660a;font-weight:bold">rescue</span> <span style="color:#0086d2">NetworkError</span> =&gt; e
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<h4 id="return-code">return code</h4>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">ret = send_post_request()
+<span style="color:#fb660a;font-weight:bold">if</span> ret.code != <span style="color:#0086f7;font-weight:bold">0</span>
+  <span style="color:#fb660a;font-weight:bold">return</span> error
+<span style="color:#fb660a;font-weight:bold">else</span>
+  parse(ret.data)
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<hr />
+
+<h4 id="存在的问题">存在的问题</h4>
+
+<p>复杂的业务逻辑:</p>
+
+<ul>
+<li>验证用户输入</li>
+<li>数据库访问</li>
+<li>文件访问</li>
+<li>网络问题</li>
+<li>&hellip;</li>
+</ul>
+
+<p>如果在业务逻辑中，使用上述的处理方法，代码很容易变丑，添加各种 if 判断，各种 begin-rescue。</p>
+
+<p><img src="imperative-code-return-early.png" alt="retrun early" /></p>
+
+<hr />
+
+<h3 id="enter-rop-railway-oriented-programming">Enter ROP(Railway Oriented Programming)</h3>
+
+<p><img src="success-failure.png" alt="success-or-failure" /></p>
+
+<p>=&gt;</p>
+
+<p><img src="success-failure-railway.png" alt="success-or-failure-railway" />
+<img src="success-failure-railway-1.png" alt="success-or-failure-railway" /></p>
+
+<p>如果 Validate 失败，就不执行 UpdateDb 操作，
+如果 UpdateDb 失败，就不执行 SendEmail 操作。</p>
+
+<p><img src="pipe-chain.png" alt="pipe chain" /></p>
+
+<p>实现：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086d2">Try</span> = <span style="color:#0086d2">Struct</span>.new(<span style="color:#0086d2">:ok</span>, data_or_exception)
+
+<span style="color:#fb660a;font-weight:bold">class</span> Try
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">pipe</span>(&amp;block)
+    <span style="color:#fb660a;font-weight:bold">if</span> !@ok
+      <span style="color:#fb660a;font-weight:bold">return</span> self
+    <span style="color:#fb660a;font-weight:bold">end</span>
+    block.call(@data_or_exception)
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">validate</span>(req)
+  <span style="color:#080;background-color:#0f140f;font-style:italic"># do your validation</span>
+  <span style="color:#0086d2">Try</span>.new(ok, validated_req)
+<span style="color:#fb660a;font-weight:bold">rescue</span> <span style="color:#0086d2">ValidateFailed</span> =&gt; e
+  <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">false</span>, e)
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+request = <span style="color:#0086d2">FakeRequest</span>.new()
+r = <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, request)
+r.pipe { |req| validate(req) }
+ .pipe { |req| update_db(req) }
+ .pipe { |db_result| send_email(db_result) }</code></pre></div>
+<h4 id="不会出错的操作">不会出错的操作</h4>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> Try
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">map</span>(&amp;block)
+    <span style="color:#fb660a;font-weight:bold">if</span> !@ok
+      <span style="color:#fb660a;font-weight:bold">return</span> self
+    <span style="color:#fb660a;font-weight:bold">end</span>
+    result = block.call(@data_or_exception)
+    <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, result)
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">trim_name</span>(str)
+  str.strip
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+
+request = <span style="color:#0086d2">FakeRequest</span>.new()
+r = <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, request)
+r.map { |req| trim_name(req.name) }</code></pre></div>
+<p><img src="two-track.png" alt="two-track" /></p>
+
+<h3 id="会抛异常的操作">会抛异常的操作</h3>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> Try
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">map</span>(&amp;block)
+    <span style="color:#fb660a;font-weight:bold">if</span> !@ok
+      <span style="color:#fb660a;font-weight:bold">return</span> self
+    <span style="color:#fb660a;font-weight:bold">end</span>
+    <span style="color:#fb660a;font-weight:bold">begin</span>
+      result = block.call(@data_or_exception)
+      <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, result)
+    <span style="color:#fb660a;font-weight:bold">rescue</span> =&gt; e
+      <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">false</span>, e)
+    <span style="color:#fb660a;font-weight:bold">end</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+
+
+request = <span style="color:#0086d2">FakeRequest</span>.new()
+r = <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, request)
+r.map { |req| function_may_raise_error(req) }</code></pre></div>
+<p><img src="function_may_raise_error.png" alt="raise error function" /></p>
+
+<h4 id="副作用">副作用</h4>
+
+<p>do something meaningful but the return value is not needed.</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> Try
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">on_success</span>(&amp;block)
+    <span style="color:#fb660a;font-weight:bold">if</span> !@ok
+      <span style="color:#fb660a;font-weight:bold">return</span> self
+    <span style="color:#fb660a;font-weight:bold">end</span>
+    block.call(@data_or_exception)
+    <span style="color:#fb660a;font-weight:bold">return</span> self
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">update_db</span>(req)
+  <span style="color:#080;background-color:#0f140f;font-style:italic"># User.save(req)</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+
+request = <span style="color:#0086d2">FakeRequest</span>.new()
+r = <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, request)
+r.on_success { |req| update_db(req) }</code></pre></div>
+<p><img src="one-track-input-output.png" alt="dead end railway" /></p>
+
+<h3 id="串联起来">串联起来</h3>
+
+<p>将以上操作串联起来：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">request = <span style="color:#0086d2">FakeRequest</span>.new()
+r = <span style="color:#0086d2">Try</span>.new(<span style="color:#fb660a">true</span>, request)
+response = r.pipe { |req| validate(req) }
+ .map { |req| get_user(req.name) }
+ .on_success { |req| update_db(req) }
+ .pipe { |req| send_email(req) }</code></pre></div>
+<p><img src="chain-validate-update_db_send_email.png" alt="chain all" /></p>
+
+<h3 id="其他">其他</h3>
+
+<ul>
+<li>Try</li>
+<li>Maybe</li>
+<li>Monad</li>
+</ul>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

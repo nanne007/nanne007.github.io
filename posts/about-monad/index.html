@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>关于 Monad | Give me five</title>
+    <meta name="DC.Title" content="关于 Monad">
+  
+
+  
+    <meta name="DC.Date" content="2014/12/24">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="Monad 定义 一个monad包含三个东西： 1. 一个类型构造器M，它可以从类型a构造出类型M[a]。 2. 一个unit函数，将类型为a的值转换成类型M[a]，函数签名为： a =&amp;gt; M[a]。 3. 一个bind函数，通过函数a =&amp;gt; M[b]将一个M[a]转换成一个M[b]，函数签名：(M[a], a =&amp;gt; M[b]) =&amp;gt; M[b]。概念类似于flatMap。
+另一种构造方式 flatMap通常可以用map和flatten代替。 类似的概念，Monad中的bind函数可以用fmap和join定义。（fmap相当于map，join相当于flatten） - fmap，通过函数a =&amp;gt; b将一个M[a]转换成M[b]，函数签名：(M[a], a =&amp;gt; b) =&amp;gt; M[b]。 - join，将一个M[M[a]]转换成M[a]，函数签名：M[M[a]] =&amp;gt; M[a]。
+等价的概念：bind(m, f) = join(fmap(m, f))。
+Continuation Monad case class M[&#43;A](in: (A =&amp;gt; Any) =&amp;gt; Any); def unit[A](x: A) = M { k: (A =&amp;gt; Any) =&amp;gt; k(x) } def bind[A, B](m: M[A], f: A =&amp;gt; M[B]): M[B] = M { k: (B =&amp;gt; Any) =&amp;gt; m.">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/about-monad/">
+  
+
+  
+    <meta name="keywords" content="monad,scala,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>关于 Monad</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/12/24 
+    
+
+    
+</header>
+
+<article>
+
+
+<h2 id="monad">Monad</h2>
+
+<h3 id="定义">定义</h3>
+
+<p>一个<code>monad</code>包含三个东西：
+1. 一个类型构造器<code>M</code>，它可以从类型<code>a</code>构造出类型<code>M[a]</code>。
+2. 一个<code>unit</code>函数，将类型为<code>a</code>的值转换成类型<code>M[a]</code>，函数签名为： <code>a =&gt; M[a]</code>。
+3. 一个<code>bind</code>函数，通过函数<code>a =&gt; M[b]</code>将一个<code>M[a]</code>转换成一个<code>M[b]</code>，函数签名：<code>(M[a], a =&gt; M[b]) =&gt; M[b]</code>。概念类似于<code>flatMap</code>。</p>
+
+<h3 id="另一种构造方式">另一种构造方式</h3>
+
+<p><code>flatMap</code>通常可以用<code>map</code>和<code>flatten</code>代替。
+类似的概念，Monad中的<code>bind</code>函数可以用<code>fmap</code>和<code>join</code>定义。（<code>fmap</code>相当于<code>map</code>，<code>join</code>相当于<code>flatten</code>）
+- <code>fmap</code>，通过函数<code>a =&gt; b</code>将一个<code>M[a]</code>转换成<code>M[b]</code>，函数签名：<code>(M[a], a =&gt; b) =&gt; M[b]</code>。
+- <code>join</code>，将一个<code>M[M[a]]</code>转换成<code>M[a]</code>，函数签名：<code>M[M[a]] =&gt; M[a]</code>。</p>
+
+<p>等价的概念：<code>bind(m, f) = join(fmap(m, f))</code>。</p>
+
+<h3 id="continuation-monad">Continuation Monad</h3>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#fb660a;font-weight:bold">case</span> <span style="color:#fb660a;font-weight:bold">class</span> M[<span style="color:#cdcaa9;font-weight:bold">+A</span>](in<span style="color:#fb660a;font-weight:bold">:</span> (<span style="color:#cdcaa9;font-weight:bold">A</span> =&gt; <span style="color:#cdcaa9;font-weight:bold">Any</span>) <span style="color:#fb660a;font-weight:bold">=&gt;</span> Any);
+
+<span style="color:#fb660a;font-weight:bold">def</span> unit[<span style="color:#cdcaa9;font-weight:bold">A</span>](x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>) <span style="color:#fb660a;font-weight:bold">=</span> M { k<span style="color:#fb660a;font-weight:bold">:</span> (<span style="color:#cdcaa9;font-weight:bold">A</span> =&gt; <span style="color:#cdcaa9;font-weight:bold">Any</span>) <span style="color:#fb660a;font-weight:bold">=&gt;</span> k(x) }
+
+<span style="color:#fb660a;font-weight:bold">def</span> bind[<span style="color:#cdcaa9;font-weight:bold">A</span>, <span style="color:#cdcaa9;font-weight:bold">B</span>](m<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">M</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>], f<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span> =&gt; M[<span style="color:#cdcaa9;font-weight:bold">B</span>])<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">M</span>[<span style="color:#cdcaa9;font-weight:bold">B</span>] <span style="color:#fb660a;font-weight:bold">=</span>
+  M { k<span style="color:#fb660a;font-weight:bold">:</span> (<span style="color:#cdcaa9;font-weight:bold">B</span> =&gt; <span style="color:#cdcaa9;font-weight:bold">Any</span>) <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+    m.in { x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span> =&gt;
+      f(x).in(k)
+    }
+  }</code></pre></div>
+<h2 id="练习题">练习题</h2>
+
+<p>下面练习题来自于 “<a href="http://blog.tmorris.net/posts/understanding-monads-using-scala-part-1/index.html">Understanding Monads Using Scala</a>”</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#080;background-color:#0f140f;font-style:italic">// A typical data type with a single abstract method
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#fb660a;font-weight:bold">case</span> <span style="color:#fb660a;font-weight:bold">class</span> Inter[<span style="color:#cdcaa9;font-weight:bold">A</span>](f<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Int</span> =&gt; A) {
+  <span style="color:#080;background-color:#0f140f;font-style:italic">// which is a functor
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#fb660a;font-weight:bold">def</span> map[<span style="color:#cdcaa9;font-weight:bold">B</span>](g<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span> =&gt; B)<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">B</span>] <span style="color:#fb660a;font-weight:bold">=</span>
+    Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> g(f(n)))
+
+  <span style="color:#080;background-color:#0f140f;font-style:italic">// and a monad (see unital below)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#fb660a;font-weight:bold">def</span> flatMap[<span style="color:#cdcaa9;font-weight:bold">B</span>](g<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span> =&gt; Inter[<span style="color:#cdcaa9;font-weight:bold">B</span>])<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">B</span>] <span style="color:#fb660a;font-weight:bold">=</span>
+    Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> g(f(n)).f(n))
+}
+
+<span style="color:#080;background-color:#0f140f;font-style:italic">// unital: A =&gt; F[A]
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">// Implementations for F=Option and F=Inter
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#fb660a;font-weight:bold">object</span> Unitals {
+  <span style="color:#fb660a;font-weight:bold">def</span> unitalOption[<span style="color:#cdcaa9;font-weight:bold">A</span>](a<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>)<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Option</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>] <span style="color:#fb660a;font-weight:bold">=</span>
+    Some(a)
+
+  <span style="color:#fb660a;font-weight:bold">def</span> unitalInter[<span style="color:#cdcaa9;font-weight:bold">A</span>](a<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>)<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>] <span style="color:#fb660a;font-weight:bold">=</span>
+    Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> a)
+}
+
+<span style="color:#080;background-color:#0f140f;font-style:italic">// Exercises
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">//
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">// It is recommended to use only map, flatMap and unital* for
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">// Option or Inter when implementing the exercises below.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">// Any other libraries are acceptable (e.g. List functions).
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#fb660a;font-weight:bold">object</span> Sequencing {
+  <span style="color:#fb660a;font-weight:bold">import</span> Unitals._
+
+  <span style="color:#080;background-color:#0f140f;font-style:italic">// Exercise 1 of 3
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// ===============
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// Implement a function that returns None if the given list
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// contains any None values, otherwise, all the Some values.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#fb660a;font-weight:bold">def</span> sequenceOption[<span style="color:#cdcaa9;font-weight:bold">A</span>](x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">Option</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]])<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Option</span>[<span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]] <span style="color:#fb660a;font-weight:bold">=</span>
+    error(<span style="color:#0086d2">&#34;todo&#34;</span>)
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// SOLUTIONx2 (ROT-13)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">/*
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    1)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    k.sbyqEvtug(havgnyBcgvba(Avy: Yvfg[N]))((n, o) =&gt; n syngZnc (k =&gt; o znc (k :: _)))
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    2)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    k zngpu {
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">      pnfr Avy  =&gt; havgnyBcgvba(Avy)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">      pnfr u::g =&gt; u syngZnc (k =&gt; frdhraprBcgvba(g) znc (k :: _))
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    }
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    */</span>
+
+  <span style="color:#080;background-color:#0f140f;font-style:italic">// Exercise 2 of 3
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// ===============
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// Implement a function that returns an Inter that applies an Int
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// to all the Inter implementations in the List of Inters and returns
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// all the results.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#fb660a;font-weight:bold">def</span> sequenceInter[<span style="color:#cdcaa9;font-weight:bold">A</span>](x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]])<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]] <span style="color:#fb660a;font-weight:bold">=</span>
+    error(<span style="color:#0086d2">&#34;todo&#34;</span>)
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// SOLUTIONx2 (ROT-13)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">/*
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    1)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    k.sbyqEvtug(havgnyVagre(Avy: Yvfg[N]))((n, o) =&gt; n syngZnc (k =&gt; o znc (k :: _)))
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    2)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    k zngpu {
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">      pnfr Avy  =&gt; havgnyVagre(Avy)
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">      pnfr u::g =&gt; u syngZnc (k =&gt; frdhraprVagre(g) znc (k :: _))
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    }
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">    */</span>
+
+  <span style="color:#080;background-color:#0f140f;font-style:italic">// Exercise 3 of 3
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// ===============
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// There is repetition in the above exercises.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// How might we be rid of it?
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>  <span style="color:#080;background-color:#0f140f;font-style:italic">// That is for Part 2.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>
+  <span style="color:#fb660a;font-weight:bold">def</span> main(args<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Array</span>[<span style="color:#cdcaa9;font-weight:bold">String</span>]) {
+    <span style="color:#fb660a;font-weight:bold">def</span> assertEquals[<span style="color:#cdcaa9;font-weight:bold">A</span>](a1<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>, a2<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>) {
+      <span style="color:#fb660a;font-weight:bold">if</span>(a1 != a2)
+        error(<span style="color:#0086d2">&#34;Assertion error. Expected: &#34;</span> + a1 + <span style="color:#0086d2">&#34; Actual: &#34;</span> + a2)
+    }
+
+    <span style="color:#fb660a;font-weight:bold">def</span> assertInterEquals[<span style="color:#cdcaa9;font-weight:bold">A</span>](a1<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>], a2<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Inter</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]) {
+      <span style="color:#fb660a;font-weight:bold">val</span> testInts <span style="color:#fb660a;font-weight:bold">=</span> List(<span style="color:#0086f7;font-weight:bold">1</span>, <span style="color:#0086f7;font-weight:bold">2</span>, <span style="color:#0086f7;font-weight:bold">0</span>, -<span style="color:#0086f7;font-weight:bold">7</span>, -<span style="color:#0086f7;font-weight:bold">9</span>, <span style="color:#0086f7;font-weight:bold">113</span>, -<span style="color:#0086f7;font-weight:bold">2048</span>)
+      assertEquals(testInts.map(a1.f(<span style="color:#fb660a;font-weight:bold">_</span>)), testInts.map(a2.f(<span style="color:#fb660a;font-weight:bold">_</span>)))
+    }
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// sequenceOption
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    assertEquals(sequenceOption(List(Some(<span style="color:#0086f7;font-weight:bold">7</span>),
+        Some(<span style="color:#0086f7;font-weight:bold">8</span>), Some(<span style="color:#0086f7;font-weight:bold">9</span>))), Some(List(<span style="color:#0086f7;font-weight:bold">7</span>, <span style="color:#0086f7;font-weight:bold">8</span>, <span style="color:#0086f7;font-weight:bold">9</span>)))
+    assertEquals(sequenceOption(List(Some(<span style="color:#0086f7;font-weight:bold">7</span>), None, Some(<span style="color:#0086f7;font-weight:bold">9</span>))),
+        None)
+    assertEquals(sequenceOption(List()),
+      Some(List()))
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// sequenceInter
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    assertInterEquals(sequenceInter(List()),
+      Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> List()))
+    assertInterEquals(sequenceInter(List(Inter(<span style="color:#0086f7;font-weight:bold">1</span>+),
+        Inter(<span style="color:#0086f7;font-weight:bold">2</span>*))), Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> List(<span style="color:#0086f7;font-weight:bold">1</span>+n, <span style="color:#0086f7;font-weight:bold">2</span>*n)))
+  }
+}</code></pre></div>
+<h3 id="实现-sequenceoption">实现 sequenceOption</h3>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#fb660a;font-weight:bold">def</span> sequenceOption[<span style="color:#cdcaa9;font-weight:bold">A</span>](x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">Option</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]])<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Option</span>[<span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]] <span style="color:#fb660a;font-weight:bold">=</span>
+  x.foldRight(unitalOption(List[<span style="color:#cdcaa9;font-weight:bold">A</span>]())) { (opt, mem) <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+    opt flatMap (a <span style="color:#fb660a;font-weight:bold">=&gt;</span> mem map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>))
+  }</code></pre></div>
+<p>为了说明程序运行过程的细节，下面分析给定的三个测试用例：</p>
+
+<h4 id="例子1-x-list-some-7-some-8-some-9">例子1：<code>x = List(Some(7), Some(8), Some(9))</code></h4>
+
+<p>将 <code>x</code> 代入到 <code>sequenceOption</code> 中，并展开 <code>foldRight</code> 得到
+（<code>ops</code> 指的是传递给 <code>foldRight</code> 的匿名函数）：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(Some(<span style="color:#0086f7;font-weight:bold">8</span>), ops(Some(<span style="color:#0086f7;font-weight:bold">9</span>), Option(List()))))</code></pre></div>
+<p>下面的代换是计算上述表达式的过程：
+1. 首先计算最内的子表达式：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">   ops(Some(<span style="color:#0086f7;font-weight:bold">9</span>), Option(List()))
+   <span style="color:#080;background-color:#0f140f;font-style:italic">// ==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(<span style="color:#0086f7;font-weight:bold">9</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+    Option(List()) map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+   }
+   <span style="color:#080;background-color:#0f140f;font-style:italic">// ==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(<span style="color:#0086f7;font-weight:bold">9</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+    Option(a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Nil</span>)
+   }
+   <span style="color:#080;background-color:#0f140f;font-style:italic">// ==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(Option(<span style="color:#0086f7;font-weight:bold">9</span><span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:Nil</span>)).flatten
+   <span style="color:#080;background-color:#0f140f;font-style:italic">// ==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Option(List(<span style="color:#0086f7;font-weight:bold">9</span>))</code></pre></div>
+<p>从而有：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">   ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(Some(<span style="color:#0086f7;font-weight:bold">8</span>), ops(Some(<span style="color:#0086f7;font-weight:bold">9</span>), Option(List()))))
+   <span style="color:#080;background-color:#0f140f;font-style:italic">// ==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(Some(<span style="color:#0086f7;font-weight:bold">8</span>), Option(List(<span style="color:#0086f7;font-weight:bold">9</span>))))</code></pre></div>
+<ol>
+<li>继续求子表达式：</li>
+</ol>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">   ops(Some(<span style="color:#0086f7;font-weight:bold">8</span>), Option(List(<span style="color:#0086f7;font-weight:bold">9</span>)))
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(<span style="color:#0086f7;font-weight:bold">8</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+      Option(List(<span style="color:#0086f7;font-weight:bold">9</span>)) map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+   }
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(<span style="color:#0086f7;font-weight:bold">8</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+      Option(a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>(9))
+   }
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(Option(<span style="color:#0086f7;font-weight:bold">8</span><span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:List</span>(9))).flatten
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Option(List(<span style="color:#0086f7;font-weight:bold">8</span>, <span style="color:#0086f7;font-weight:bold">9</span>))</code></pre></div>
+<p>又有：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">   ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(Some(<span style="color:#0086f7;font-weight:bold">8</span>), Option(List(<span style="color:#0086f7;font-weight:bold">9</span>))))
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), Option(List(<span style="color:#0086f7;font-weight:bold">8</span>, <span style="color:#0086f7;font-weight:bold">9</span>)))</code></pre></div>
+<ol>
+<li>最终求得结果：</li>
+</ol>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">   ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), Option(List(<span style="color:#0086f7;font-weight:bold">8</span>, <span style="color:#0086f7;font-weight:bold">9</span>)))
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(<span style="color:#0086f7;font-weight:bold">7</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+      Option(List(<span style="color:#0086f7;font-weight:bold">8</span>, <span style="color:#0086f7;font-weight:bold">9</span>)) map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+   }
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(<span style="color:#0086f7;font-weight:bold">7</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+      Option(a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>(8, 9))
+   }
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Some(Option(<span style="color:#0086f7;font-weight:bold">7</span><span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:List</span>(8, 9))).flatten
+   <span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>   Option(List(<span style="color:#0086f7;font-weight:bold">7</span>, <span style="color:#0086f7;font-weight:bold">8</span>, <span style="color:#0086f7;font-weight:bold">9</span>))</code></pre></div>
+<h4 id="例子二-x-list-some-7-none-some-9">例子二：<code>x = List(Some(7), None, Some(9))</code></h4>
+
+<p>使用同样的方法展开得到：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(None, ops(Some(<span style="color:#0086f7;font-weight:bold">9</span>), Option(List()))))</code></pre></div>
+<p>代换过程如下：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(None, ops(Some(<span style="color:#0086f7;font-weight:bold">9</span>), Option(List()))))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(None, Option(List(<span style="color:#0086f7;font-weight:bold">9</span>))))
+
+ops(None, Option(List(<span style="color:#0086f7;font-weight:bold">9</span>)))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>None flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  Option(List(<span style="color:#0086f7;font-weight:bold">9</span>)) map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+}
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>None
+
+ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), ops(None, Option(List(<span style="color:#0086f7;font-weight:bold">9</span>))))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), None)
+
+ops(Some(<span style="color:#0086f7;font-weight:bold">7</span>), None)
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Some(<span style="color:#0086f7;font-weight:bold">7</span>) flatMap { a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  None map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+}
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Some(None).flatten <span style="color:#080;background-color:#0f140f;font-style:italic">//
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>==&gt;
+None</code></pre></div>
+<p>这个例子中，一旦遇到了一个 <code>None</code> 值，fold 值就变成 <code>None</code>，
+这导致后续所有的 <code>fold</code> 操作都会是 <code>None</code>。</p>
+
+<h4 id="例子三-list">例子三：<code>List()</code></h4>
+
+<p>对于 <code>List()</code> 来说，因为没有元素，<code>foldRight</code> 操作返回的是初始值 <code>Option(List())</code>，
+也即 <code>Some(List())</code>，一个包含空元素列表的 <code>Some</code>。</p>
+
+<h3 id="实现-sequenceinter">实现 sequenceInter</h3>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">x.foldRight(unitalInter(List[<span style="color:#cdcaa9;font-weight:bold">A</span>]())) { (it, mem) <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  it.flatMap (a <span style="color:#fb660a;font-weight:bold">=&gt;</span> mem map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>))
+}</code></pre></div>
+<h4 id="例子一-x-list">例子一：<code>x = List()</code></h4>
+
+<p>展开 <code>sequenceInter(List())</code> 得到 <code>unitalInter(List[A]())</code>，即：<code>Inter(_ =&gt; List[A]())</code>。</p>
+
+<h4 id="例子二-x-list-inter-1-inter-2">例子二：<code>x = List(Inter(1+), Inter(2*))</code></h4>
+
+<p><code>1+</code>、<code>2*</code> 这样的语法是 Scala 的 <code>postfixOps</code>，它允许你使用后缀语法。
+在这里，可以写成 <code>List(Inter(1 + _), Inter(2 * _)</code>。</p>
+
+<p>展开 <code>sequenceInter(x)</code> 得到：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">ops(Inter(<span style="color:#0086f7;font-weight:bold">1</span> + <span style="color:#fb660a;font-weight:bold">_</span>), ops(Inter(<span style="color:#0086f7;font-weight:bold">2</span> * <span style="color:#fb660a;font-weight:bold">_</span>), Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> List[<span style="color:#cdcaa9;font-weight:bold">A</span>]())))</code></pre></div>
+<p>下面是其展开过程：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">ops(Inter(<span style="color:#0086f7;font-weight:bold">2</span> * <span style="color:#fb660a;font-weight:bold">_</span>), Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> List[<span style="color:#cdcaa9;font-weight:bold">A</span>]()))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(<span style="color:#0086f7;font-weight:bold">2</span> * <span style="color:#fb660a;font-weight:bold">_</span>).flatMap ( a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> List[<span style="color:#cdcaa9;font-weight:bold">A</span>]()) map ( a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+)
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(<span style="color:#0086f7;font-weight:bold">2</span> * <span style="color:#fb660a;font-weight:bold">_</span>).flatMap ( a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  Inter( <span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> List(a))
+)
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> (<span style="color:#0086f7;font-weight:bold">2</span> * n) <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]()).f(n)) <span style="color:#080;background-color:#0f140f;font-style:italic">//
+</span><span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> List(<span style="color:#0086f7;font-weight:bold">2</span> * n))
+
+ops(Inter(<span style="color:#0086f7;font-weight:bold">1</span> + <span style="color:#fb660a;font-weight:bold">_</span>), ops(Inter(<span style="color:#0086f7;font-weight:bold">2</span> * <span style="color:#fb660a;font-weight:bold">_</span>), Inter(<span style="color:#fb660a;font-weight:bold">_</span> <span style="color:#fb660a;font-weight:bold">=&gt;</span> List[<span style="color:#cdcaa9;font-weight:bold">A</span>]())))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>ops(Inter(<span style="color:#0086f7;font-weight:bold">1</span> + <span style="color:#fb660a;font-weight:bold">_</span>), Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> List(<span style="color:#0086f7;font-weight:bold">2</span> * n)))
+
+ops(Inter(<span style="color:#0086f7;font-weight:bold">1</span> + <span style="color:#fb660a;font-weight:bold">_</span>), Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> List(<span style="color:#0086f7;font-weight:bold">2</span> * n)))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(<span style="color:#0086f7;font-weight:bold">1</span> + <span style="color:#fb660a;font-weight:bold">_</span>) flatMap ( a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> List(<span style="color:#0086f7;font-weight:bold">2</span> * n)) map (a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#fb660a;font-weight:bold">_</span>)
+)
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(<span style="color:#0086f7;font-weight:bold">1</span> + <span style="color:#fb660a;font-weight:bold">_</span>) flatMap (a <span style="color:#fb660a;font-weight:bold">=&gt;</span>
+  Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> a <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>(2 <span style="color:#cdcaa9;font-weight:bold">*</span> <span style="color:#cdcaa9;font-weight:bold">n</span>))
+)
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(m <span style="color:#fb660a;font-weight:bold">=&gt;</span> Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> (<span style="color:#0086f7;font-weight:bold">1</span> + m) <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>(2 <span style="color:#cdcaa9;font-weight:bold">*</span> <span style="color:#cdcaa9;font-weight:bold">n</span>)).f(m))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(m <span style="color:#fb660a;font-weight:bold">=&gt;</span> (<span style="color:#0086f7;font-weight:bold">1</span> + m) <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">List</span>(2 <span style="color:#cdcaa9;font-weight:bold">*</span> <span style="color:#cdcaa9;font-weight:bold">m</span>))
+<span style="color:#080;background-color:#0f140f;font-style:italic">//==&gt;
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>Inter(n <span style="color:#fb660a;font-weight:bold">=&gt;</span> List((<span style="color:#0086f7;font-weight:bold">1</span> + n), (<span style="color:#0086f7;font-weight:bold">2</span> * n)))</code></pre></div>
+<h3 id="结论">结论</h3>
+
+<p>使用 Moands 时，应该抓住其背后的逻辑，这样才能以不变应万变。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

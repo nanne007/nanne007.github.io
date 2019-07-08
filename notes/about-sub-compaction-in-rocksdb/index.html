@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>关于 RocksDB 的 sub-compaction | Give me five</title>
+    <meta name="DC.Title" content="关于 RocksDB 的 sub-compaction">
+  
+
+  
+    <meta name="DC.Date" content="2018/12/15">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="之前我一直以为 sub-compaction 只会在 l0-&amp;gt; l1 生效。
+今天观察线上 tikv 节点的 rocksdb log，发现 l2 -&amp;gt; l3 的 manual compaction，它的 sub compaction 竟然是 2。我配置的 tikv max_sub_compactions 也是 2。
+看了 rocksdb(5.8.7) 的代码：
+bool Compaction::ShouldFormSubcompactions() const { if (immutable_cf_options_.max_subcompactions &amp;lt;= 1 || cfd_ == nullptr) { return false; } if (cfd_-&amp;gt;ioptions()-&amp;gt;compaction_style == kCompactionStyleLevel) { return start_level_ == 0 &amp;amp;&amp;amp; output_level_ &amp;gt; 0 &amp;amp;&amp;amp; !IsOutputLevelEmpty(); } else if (cfd_-&amp;gt;ioptions()-&amp;gt;compaction_style == kCompactionStyleUniversal) { return number_levels_ &amp;gt; 1 &amp;amp;&amp;amp; output_level_ &amp;gt; 0; } else { return false; } }  上面只提到了 l0 -&amp;gt; ln。">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/about-sub-compaction-in-rocksdb/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>关于 RocksDB 的 sub-compaction</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2018/12/15 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>之前我一直以为 sub-compaction 只会在 l0-&gt; l1 生效。</p>
+
+<p>今天观察线上 tikv 节点的 rocksdb log，发现 l2 -&gt; l3 的  manual compaction，它的 sub compaction 竟然是 2。我配置的 tikv max_sub_compactions 也是 2。</p>
+
+<p>看了 rocksdb(5.8.7) 的代码：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#cdcaa9;font-weight:bold">bool</span> Compaction::ShouldFormSubcompactions() <span style="color:#fb660a;font-weight:bold">const</span> {
+  <span style="color:#fb660a;font-weight:bold">if</span> (immutable_cf_options_.max_subcompactions &lt;= <span style="color:#0086f7;font-weight:bold">1</span> || cfd_ == <span style="color:#fb660a;font-weight:bold">nullptr</span>) {
+    <span style="color:#fb660a;font-weight:bold">return</span> false;
+  }
+  <span style="color:#fb660a;font-weight:bold">if</span> (cfd_-&gt;ioptions()-&gt;compaction_style == kCompactionStyleLevel) {
+    <span style="color:#fb660a;font-weight:bold">return</span> start_level_ == <span style="color:#0086f7;font-weight:bold">0</span> &amp;&amp; output_level_ &gt; <span style="color:#0086f7;font-weight:bold">0</span> &amp;&amp; !IsOutputLevelEmpty();
+  } <span style="color:#fb660a;font-weight:bold">else</span> <span style="color:#fb660a;font-weight:bold">if</span> (cfd_-&gt;ioptions()-&gt;compaction_style == kCompactionStyleUniversal) {
+    <span style="color:#fb660a;font-weight:bold">return</span> number_levels_ &gt; <span style="color:#0086f7;font-weight:bold">1</span> &amp;&amp; output_level_ &gt; <span style="color:#0086f7;font-weight:bold">0</span>;
+  } <span style="color:#fb660a;font-weight:bold">else</span> {
+    <span style="color:#fb660a;font-weight:bold">return</span> false;
+  }
+}
+</code></pre></div>
+<p>上面只提到了 l0 -&gt; ln。</p>
+
+<p>然而官方文档提到： <a href="https://github.com/facebook/rocksdb/wiki/Sub-Compaction">https://github.com/facebook/rocksdb/wiki/Sub-Compaction</a></p>
+
+<p>manual compaction 也会使用 sub_compaction 。</p>
+
+<p>需要再探索一下。</p>
+
+<h3 id="更新结论">更新结论</h3>
+
+<p>rocksdb 在后面的更新中加入了这个功能：如果是 manual compaction ，也会利用 sub_compaction 加快 compact_range。
+PR 在 <a href="https://github.com/facebook/rocksdb/pull/3549">https://github.com/facebook/rocksdb/pull/3549</a></p>
+
+<p>TiKV 使用的rocksdb 是 PingCAP 自己 fork 过来维护的。
+在 v2.0.2 版本的时候， PingCAP 已经把上述的功能引入到它们自己的 RocksDB 中了。
+PR 在 <a href="https://github.com/pingcap/rust-rocksdb/pull/202">https://github.com/pingcap/rust-rocksdb/pull/202</a></p>
+
+<p>So far so good</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

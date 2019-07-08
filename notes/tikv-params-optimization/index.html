@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Tikv 的参数调优 | Give me five</title>
+    <meta name="DC.Title" content="Tikv 的参数调优">
+  
+
+  
+    <meta name="DC.Date" content="2018/04/08">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="Manual Compaction TiKV 有一个后台任务定期去对 region 做Compact，每次 100个 region。见：store.on_comact_check_tick。
+落到 RocksDB里面就是很多个 CompactRange 操作。见： compact.rs
+如果业务场景是频繁的写更新，一次 tick 就会产生多个 compact_range 操作。 而 RocksDB 在 CompactRange 时会做一次 flush。 如果某次 compact range 的次数过多，会引起 level-0 的sst 来不急 compaction，引起 write_stall。
+参考：
+ http://kernelmaker.github.io/Rocksdb_Study_4 http://kernelmaker.github.io/Rocksdb_Study_5 http://alexstocks.github.io/html/rocksdb.html  系统参数 fs： dirty_background_ratio 和 dirty_ratio
+参考：
+ https://www.jianshu.com/p/027f681f59e6  bytes-per-sync https://github.com/tikv/tikv/issues/2675">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/tikv-params-optimization/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Tikv 的参数调优</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2018/04/08 
+    
+
+    
+</header>
+
+<article>
+
+
+<h3 id="manual-compaction">Manual Compaction</h3>
+
+<p>TiKV 有一个后台任务定期去对 region 做Compact，每次 100个 region。见：<code>store.on_comact_check_tick</code>。</p>
+
+<p>落到  RocksDB里面就是很多个 CompactRange 操作。见： <code>compact.rs</code></p>
+
+<p>如果业务场景是频繁的写更新，一次 tick 就会产生多个 compact_range 操作。
+而 RocksDB 在 CompactRange 时会做一次 flush。
+如果某次 compact range 的次数过多，会引起 level-0 的sst 来不急 compaction，引起 write_stall。</p>
+
+<p>参考：</p>
+
+<ul>
+<li><a href="http://kernelmaker.github.io/Rocksdb_Study_4">http://kernelmaker.github.io/Rocksdb_Study_4</a></li>
+<li><a href="http://kernelmaker.github.io/Rocksdb_Study_5">http://kernelmaker.github.io/Rocksdb_Study_5</a></li>
+<li><a href="http://alexstocks.github.io/html/rocksdb.html">http://alexstocks.github.io/html/rocksdb.html</a></li>
+</ul>
+
+<h3 id="系统参数">系统参数</h3>
+
+<p>fs： dirty_background_ratio 和 dirty_ratio</p>
+
+<p>参考：</p>
+
+<ul>
+<li><a href="https://www.jianshu.com/p/027f681f59e6">https://www.jianshu.com/p/027f681f59e6</a></li>
+</ul>
+
+<h3 id="bytes-per-sync">bytes-per-sync</h3>
+
+<p><a href="https://github.com/tikv/tikv/issues/2675">https://github.com/tikv/tikv/issues/2675</a></p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

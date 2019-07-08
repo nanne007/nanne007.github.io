@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Packrat Parsing in Scala | Give me five</title>
+    <meta name="DC.Title" content="Packrat Parsing in Scala">
+  
+
+  
+    <meta name="DC.Date" content="2014/05/26">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="原文 Packrat Parsing in Scala
+ 解决回溯时重复解析的问题 为 Input 构造一个 Memo Cache，保存不同 Parsers 在 Input 不同位置上的结果； 回溯时，相同的 Parser 在相同 Input 位置上的结果就可以直接从 Memo 中返回。
+解决直接左递归问题 expr = expr &#39;&#43;&#39; &#39;1&#39; | &#39;1&#39;   完成 seed parsing。 seed parsing 指的是左递归语法中的基本步骤，比如上述例子中 expr = &#39;1&#39;。 确定 seed parsing 之后，左递归的解析才可以在此基础上推演下去。 在 seed 基础上不断 grow，直到达到终点。  举个例子：上述文法在输入 1&#43;1&#43;1 上的表现。 1. input 的初始 Memo 为空，cache = { } 2. 完成 seed parsing 之后，cache = { [expr, 1] = 1 } 3.">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/packrat-parsing-in-scala/">
+  
+
+  
+    <meta name="keywords" content="scala,parsing,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Packrat Parsing in Scala</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/05/26 
+    
+
+    
+</header>
+
+<article>
+
+
+<blockquote>
+<p>原文 <a href="http://scala-programming-language.1934581.n4.nabble.com/attachment/1956909/0/packrat_parsers.pdf">Packrat Parsing in Scala</a></p>
+</blockquote>
+
+<h3 id="解决回溯时重复解析的问题">解决回溯时重复解析的问题</h3>
+
+<p>为 Input 构造一个 Memo Cache，保存不同 Parsers 在 Input 不同位置上的结果；
+回溯时，相同的 Parser 在相同 Input 位置上的结果就可以直接从 Memo 中返回。</p>
+
+<h3 id="解决直接左递归问题">解决直接左递归问题</h3>
+
+<pre><code>expr = expr '+' '1'
+     | '1'
+</code></pre>
+
+<ol>
+<li>完成 seed parsing。
+seed parsing 指的是左递归语法中的基本步骤，比如上述例子中 <code>expr = '1'</code>。
+确定 seed parsing 之后，左递归的解析才可以在此基础上推演下去。</li>
+<li>在 seed 基础上不断 grow，直到达到终点。</li>
+</ol>
+
+<p>举个例子：上述文法在输入 <code>1+1+1</code> 上的表现。
+1. input 的初始 Memo 为空，cache = { }
+2. 完成 seed parsing 之后，cache = { [expr, 1] = 1 }
+3. 再重新用 expr 解析输入，
+   这时， <code>expr = expr '+' '1'</code> 中右边的 <code>expr</code> 解析结果就可以直接从 cache 中返回，
+   得到新的结果之后，再次更新 cache = { [expr, 1] = 3 }。
+   不断重复这个过程，直到没有新结果，这就是最终 expr 匹配的结果。
+   反映在这个例子中是， cache = { [expr, 1] = 5 }。</p>
+
+<h3 id="解决直接左递归">解决直接左递归</h3>
+
+<pre><code>MEMO: (RULE, Pos) -&gt; MEMOENTRY
+MEMOENTRY: (ans: AST or LR, pos: Position)
+LR: (detected: Boolean)
+</code></pre>
+
+<pre><code>GROW-LR(rule, position, memoEntry, H)
+  ... // line A
+  while TRUE do
+    Pos &lt;- position
+    ... // line B
+    let ans = EVAL(rule.body)
+    if(ans = FAIL or Pos &lt;= memoEntry.pos) then break
+    memoEntry.ans &lt;- ans
+    memoEntry.pos = Pos
+  ... // line C
+  Pos &lt;- memoEntry.pos
+  return memoEntry.ans
+</code></pre>
+
+<pre><code>APPLY-RULE(rule, position)
+  let m = MEMO(rule, position)
+  if  m = NIL
+      then let lr = new LR(FALSE)
+           m &lt;- new MEMOENTRY(lr, position)
+           MEMO(rule, position) &lt;- m
+           // 1. evaluate the body
+           let ans = EVAL(rule.body)
+           m.ans &lt;- ans
+           m.pos &lt;- Pos
+           // 3. found a left recursive rule, and a successful seed parse
+           if lr.detected = TRUE and ans != FAIL
+              then return GROW-LR(rule, position, m, NIL)
+              else return ans
+      else Pos &lt;- m.pos
+           // 2. a left recursive call found
+           if m.ans is LR
+              m.ans.detected &lt;- TRUE
+              return FAIL
+           else return m.ans
+</code></pre>
+
+<h3 id="解决间接左递归">解决间接左递归</h3>
+
+<pre><code>// data structures
+LR: (seed: AST, rule: RULE, head: HEAD, next: LR)
+HEAD: (rule: RULE, involvedSet, evalSet: set of RULEs)
+
+// global vars
+LRStack: a linked list of LR
+HEADS: Position -&gt; HEAD
+
+APPLY-RULE(rule, position)
+  let m = RECALL(rule, position)
+  if  m = NIL
+      then
+          // create a new LR and push it onto the rule invocation stack
+          let lr = new LR(FAIL, rule, NIL, LRStack)
+          LRStack &lt;- lr
+          // memorize lr, then evaluate R
+          m &lt;- new MEMOENTRY(lr, position)
+          MEMO(rule, position) &lt;- m
+          let ans = EVAL(rule.body)
+          //pop lr off the rule invocation stack
+          LRStack &lt;- LRStack.next
+          m.pos &lt;- Pos
+          if lr.head != NIL
+             then lr.seed &lt;- ans
+                  return LR-ANSWER(rule, position, m)
+             else m.ans &lt;- ans
+                  return ans
+      else
+          Pos &lt;- m.pos
+          if m.ans is LR
+             then SETUP-LR(rule, m.ans)
+                  return m.ans.seed
+             else return m.ans
+</code></pre>
+
+<pre><code>SETUP-LR(rule, lr)
+  if lr.head = NIL then lr.head &lt;- new HEAD(rule, {}, {})
+  let s = LRStack
+  while s.head.rule != lr.head.rule
+        do s.head &lt;- lr.head
+           lr.head.involvedSet &lt;- lr.head.involvedSet | {s.rule}
+           s &lt;- s.next
+</code></pre>
+
+<pre><code>GROW-LR(rule, position, memoEntry, head)
+  HEADS(position) &lt;- head // line A
+  while TRUE do
+    Pos &lt;- position
+    head.evalSet &lt;- COPY(head.involvedSet) // line B
+    let ans = EVAL(rule.body)
+    if(ans = FAIL or Pos &lt;= memoEntry.pos) then break
+    memoEntry.ans &lt;- ans
+    memoEntry.pos = Pos
+  HEADS(P) &lt;- NIL // line C
+  Pos &lt;- memoEntry.pos
+  return memoEntry.ans
+</code></pre>
+
+<pre><code>RECALL(rule, position)
+  let m = MEMO(rule, position)
+  let h = HEADS(position)
+  // if not growing a seed parse, just return what is stored
+  // in memo table.
+  if h = NIL then return m
+  // do not evaluate any rule that is not involved in the left recursion
+  if m = NIL and rule NOT BELONG TO {h.rule} | h.involvedSet
+     then return new MEMOENTRY(FAIL, position)
+  if rule BELONG TO h.evalSet
+     then h.evalSet &lt;- h.evalSet - rule
+          let ans = EVAL(rule.body)
+          m.ans &lt;- ans
+          m.pos &lt;- Pos
+  return m
+</code></pre>
+
+<pre><code>LR-ANSWER(rule, position, memo)
+  let h = memo.ans.head
+  if h.rule != rule
+     then return memo.ans.seed
+     else memo.ans &lt;- m.ans.seed
+          if m.ans = FAIL
+             then return FAIL
+             else return GROW-LR(rule, position, memo, h)
+</code></pre>
+
+<p>终于明白了大概，看吐了都。</p>
+
+<p>下一步，结合 scala parsing combinator 中的实现再重新梳理一下。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>质数生成器在 Ruby 标准库中的实现 | Give me five</title>
+    <meta name="DC.Title" content="质数生成器在 Ruby 标准库中的实现">
+  
+
+  
+    <meta name="DC.Date" content="2013/12/09">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="如果你在 Project Euler 上做过题，你一定碰见过很多和质数相关的题目。 1. 判断一个数是否是质数， 2. 第XX个质数， 3. 前XX个数中的所有质数， 4. 质因数分解，
+最近，遇到了 Euler&amp;rsquo;s Totient function, 和质因数分解有些关系，心血来潮看了下 Ruby prime gem 的代码。
+质因数分解 质因数分解的代码异常简练，使用的是最简单直接的试除法，借助了质数生成器。
+生成器 质因数分解默认的生成器是 Prime::Generator23：正如名字所暗含的一样，Generator23 生成了所有不被2和3整除的数，代码的实现非常灵巧。
+ 我也是使用这种方法实现素数判断的，但代码远远不如它精简。好的代码可以提高 Programmer 的觉悟。
+ 但，一个数不被 2 和 3 整除不代表它就是素数，Generator23 只是一个伪素数生成器。 它的父类是 PseudoPrimeGenerator，PseudoPrimeGenerator 包含 Enumerable，实现了 each 方法；同时，作为父类，又提供 succ、next、rewind 抽象方法（Ruby 中没有抽象方法，这里只是借助其概念）。
+除了 Generator23，PseudoPrimeGenerator 还有两个子类， - EratosthenesGenerator - TrialDivisionGenerator
+生成器 - EratosthenesGenerator compute_primes 是这个生成器的核心。 该实现在基本的 Sieve of Eratosthenes 算法上做了两点改进： - 偶数直接筛掉。 - 只计算到不大于 sqrt(n).floor 的那个质数。">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/prime-generator-in-ruby-std/">
+  
+
+  
+    <meta name="keywords" content="ruby,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>质数生成器在 Ruby 标准库中的实现</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2013/12/09 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>如果你在 <a href="http://projecteuler.net">Project Euler</a> 上做过题，你一定碰见过很多和质数相关的题目。
+1. 判断一个数是否是质数，
+2. 第XX个质数，
+3. 前XX个数中的所有质数，
+4. 质因数分解，</p>
+
+<p>最近，遇到了 <a href="http://mathworld.wolfram.com/TotientFunction.html">Euler&rsquo;s Totient function</a>, 和质因数分解有些关系，心血来潮看了下 Ruby prime gem 的代码。</p>
+
+<h2 id="质因数分解">质因数分解</h2>
+
+<p>质因数分解的代码异常简练，使用的是最简单直接的<a href="http://en.wikipedia.org/wiki/Trial_division">试除法</a>，借助了质数生成器。</p>
+
+<h2 id="生成器">生成器</h2>
+
+<p>质因数分解默认的生成器是 <code>Prime::Generator23</code>：正如名字所暗含的一样，<code>Generator23</code> 生成了所有不被2和3整除的数，代码的实现非常灵巧。</p>
+
+<blockquote>
+<p>我也是使用这种方法实现素数判断的，但代码远远不如它精简。好的代码可以提高 Programmer 的觉悟。</p>
+</blockquote>
+
+<p>但，一个数不被 2 和 3 整除不代表它就是素数，<code>Generator23</code> 只是一个伪素数生成器。
+它的父类是 <code>PseudoPrimeGenerator</code>，<code>PseudoPrimeGenerator</code> 包含 <code>Enumerable</code>，实现了 <code>each</code> 方法；同时，作为父类，又提供 <code>succ</code>、<code>next</code>、<code>rewind</code> 抽象方法（Ruby 中没有抽象方法，这里只是借助其概念）。</p>
+
+<p>除了 <code>Generator23</code>，<code>PseudoPrimeGenerator</code> 还有两个子类，
+- EratosthenesGenerator
+- TrialDivisionGenerator</p>
+
+<h3 id="生成器-eratosthenesgenerator">生成器 - EratosthenesGenerator</h3>
+
+<p><code>compute_primes</code> 是这个生成器的核心。
+该实现在基本的 Sieve of Eratosthenes 算法上做了两点改进：
+- 偶数直接筛掉。
+- 只计算到不大于 <code>sqrt(n).floor</code> 的那个质数。</p>
+
+<p><code>(-(segment_min + 1 + sieving_primes[i]) / 2) % sieving_primes[i]</code> 这行代码是画龙点睛之笔。不过，代码可以更加函数化，比如说：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">segment.each <span style="color:#fb660a;font-weight:bold">do</span> |prime|
+  @primes.push prime <span style="color:#fb660a;font-weight:bold">unless</span> prime.nil?
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#080;background-color:#0f140f;font-style:italic"># ===&gt;</span>
+
+@primes.concat segment.reject {|p| p.nil? }</code></pre></div>
+<h2 id="prime-中的元编程">Prime 中的元编程</h2>
+
+<p>Ruby 中，元编程无孔不入：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> Prime
+  <span style="color:#fb660a">include</span> <span style="color:#0086d2">Enumerable</span>
+  @the_instance = <span style="color:#0086d2">Prime</span>.new
+
+  <span style="color:#080;background-color:#0f140f;font-style:italic">#...</span>
+
+  <span style="color:#fb660a;font-weight:bold">class</span> &lt;&lt; self
+    <span style="color:#fb660a">extend</span> <span style="color:#0086d2">Forwardable</span>
+    <span style="color:#fb660a">include</span> <span style="color:#0086d2">Enumerable</span>
+    <span style="color:#080;background-color:#0f140f;font-style:italic"># Returns the default instance of Prime.</span>
+    <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">instance</span>; @the_instance <span style="color:#fb660a;font-weight:bold">end</span>
+
+    <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">method_added</span>(method)
+      (class&lt;&lt; self;self;<span style="color:#fb660a;font-weight:bold">end</span>).def_delegator <span style="color:#0086d2">:instance</span>, method
+    <span style="color:#fb660a;font-weight:bold">end</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>因为 <code>method_add</code> 方法，才会 <code>Prime.each</code> 这样的调用。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

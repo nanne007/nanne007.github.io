@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>TLP in Scala | Give me five</title>
+    <meta name="DC.Title" content="TLP in Scala">
+  
+
+  
+    <meta name="DC.Date" content="2015/06/13">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="Concepts  Dependent Type Abstract Type type keyword
+ Phantom Type, used as type constraints but never instantiated.
+ Implicit Parameter/Conversion
+  trait Printer[T] { def print(t: T): String } implicit val sp: Printer[Int] = new Printer[Int] { def print(i :Int) = i.toString } def foo[T](t: T)(implicit p: Printer[T]) = p.print(t)  Type Class  trait CanFoo[A] { def foos(x: A): String } case class Wrapper(wrapped: String) object WrapperCanFoo extends CanFoo[Wrapper] { def foos(x: Wrapper) = x.">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/type-level-programming/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>TLP in Scala</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2015/06/13 
+    
+
+    
+</header>
+
+<article>
+
+
+<h3 id="concepts">Concepts</h3>
+
+<ul>
+<li>Dependent Type</li>
+<li>Abstract Type</li>
+
+<li><p><code>type</code> keyword</p></li>
+
+<li><p>Phantom Type, used as type constraints but never instantiated.</p></li>
+
+<li><p>Implicit Parameter/Conversion</p></li>
+</ul>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#fb660a;font-weight:bold">trait</span> Printer[<span style="color:#cdcaa9;font-weight:bold">T</span>] {
+  <span style="color:#fb660a;font-weight:bold">def</span> print(t<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">T</span>)<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">String</span>
+}
+
+<span style="color:#fb660a;font-weight:bold">implicit</span> <span style="color:#fb660a;font-weight:bold">val</span> sp<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Printer</span>[<span style="color:#cdcaa9;font-weight:bold">Int</span>] <span style="color:#fb660a;font-weight:bold">=</span> <span style="color:#fb660a;font-weight:bold">new</span> Printer[<span style="color:#cdcaa9;font-weight:bold">Int</span>] {
+  <span style="color:#fb660a;font-weight:bold">def</span> print(i <span style="color:#fb660a;font-weight:bold">:</span><span style="color:#cdcaa9;font-weight:bold">Int</span>) <span style="color:#fb660a;font-weight:bold">=</span> i.toString
+}
+
+<span style="color:#fb660a;font-weight:bold">def</span> foo[<span style="color:#cdcaa9;font-weight:bold">T</span>](t<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">T</span>)(<span style="color:#fb660a;font-weight:bold">implicit</span> p<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Printer</span>[<span style="color:#cdcaa9;font-weight:bold">T</span>]) <span style="color:#fb660a;font-weight:bold">=</span> p.print(t)</code></pre></div>
+<ul>
+<li>Type Class</li>
+</ul>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#fb660a;font-weight:bold">trait</span> CanFoo[<span style="color:#cdcaa9;font-weight:bold">A</span>] {
+  <span style="color:#fb660a;font-weight:bold">def</span> foos(x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>)<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">String</span>
+}
+
+<span style="color:#fb660a;font-weight:bold">case</span> <span style="color:#fb660a;font-weight:bold">class</span> Wrapper(wrapped<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">String</span>)
+
+<span style="color:#fb660a;font-weight:bold">object</span> WrapperCanFoo <span style="color:#fb660a;font-weight:bold">extends</span> CanFoo[<span style="color:#cdcaa9;font-weight:bold">Wrapper</span>] {
+  <span style="color:#fb660a;font-weight:bold">def</span> foos(x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Wrapper</span>) <span style="color:#fb660a;font-weight:bold">=</span> x.wrapped
+}</code></pre></div>
+<p>Idea: Provide evidence(<code>WrapperCanFoo</code>) that a class(<code>Wrapper</code>) satisfies an interface(<code>CanFoo</code>).</p>
+
+<p>add implicit to turn into:</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#fb660a;font-weight:bold">implicit</span> <span style="color:#fb660a;font-weight:bold">object</span> WrapperCanFoo <span style="color:#fb660a;font-weight:bold">extends</span> CanFoo[<span style="color:#cdcaa9;font-weight:bold">Wrapper</span>] {
+  <span style="color:#fb660a;font-weight:bold">def</span> foos(x<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">Wrapper</span>) <span style="color:#fb660a;font-weight:bold">=</span> x.wrapped
+}
+<span style="color:#fb660a;font-weight:bold">def</span> foo[<span style="color:#cdcaa9;font-weight:bold">A</span>](thing<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">A</span>)(<span style="color:#fb660a;font-weight:bold">implicit</span> evidence<span style="color:#fb660a;font-weight:bold">:</span> <span style="color:#cdcaa9;font-weight:bold">CanFoo</span>[<span style="color:#cdcaa9;font-weight:bold">A</span>]) <span style="color:#fb660a;font-weight:bold">=</span> evidence.foos(thing)
+foo(Wrapper(<span style="color:#0086d2">&#34;hi&#34;</span>))</code></pre></div>
+<ul>
+<li><p><code>implicitly</code> and <code>=:=</code></p></li>
+
+<li><p>Aux Pattern</p></li>
+</ul>
+
+<h3 id="reflection">Reflection</h3>
+
+<h4 id="symbol">Symbol</h4>
+
+<p>TypeSymbol: type, class, trait declarations, type parameters.
+  - ClassSymbol
+TermSymbol: val, var, def, object declarations, packages, value parameters.
+  - MethodSymbol: def
+  - ModuleSymbol: object declaration</p>
+
+<p>转换到更具化的符号。</p>
+
+<p><code>asClass</code>,
+<code>asMethod</code></p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">typeOf[<span style="color:#cdcaa9;font-weight:bold">String</span>].member(TermName(<span style="color:#0086d2">&#34;length&#34;</span>)).asMethod</code></pre></div>
+<h4 id="type">Type</h4>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">universe.typeOf
+universe.weakTypeOf</code></pre></div>
+<ul>
+<li>check subtyping of two types: <code>&lt;:&lt;</code>, <code>weak_&lt;:&lt;</code></li>
+<li>check equality of two types: <code>=:=</code>(not <code>==</code>)</li>
+<li>query for certain members or inner types: <code>typeOf[T].members</code>, <code>typeOf[T].declarations</code></li>
+</ul>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

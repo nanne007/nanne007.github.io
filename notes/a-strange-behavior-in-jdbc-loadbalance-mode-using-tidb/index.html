@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>JDBC loadbalance 模式的小坑 | Give me five</title>
+    <meta name="DC.Title" content="JDBC loadbalance 模式的小坑">
+  
+
+  
+    <meta name="DC.Date" content="2018/08/08">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="昨天在写代码插入数据到 tidb 的时候，时不时报错说 connection closed。一直没找到原因。 今天梳理代码，发现了这个坑。
+用 jdbc 连接 tidb 的时候，
+ 配置了 jdbc:mysql:loadbalance 模式（后面有多台 tidb，暂时还没有 load balance，只能先通过这种方式来搞）。 然后 jdbc 连接中没有显式的配置用哪个库。  这个时候，mysql client 底层在做 loadblance 的时候，会把之前 connection 的状态 sync 到新的 connection 上。这里面包括了：
+ auto commit catalog isolation level max rows  void syncSessionState(Connection source, Connection target, boolean readOnly) throws SQLException { if (target != null) { target.setReadOnly(readOnly); } if (source == null || target == null) { return; } boolean prevUseLocalSessionState = source.">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/a-strange-behavior-in-jdbc-loadbalance-mode-using-tidb/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>JDBC loadbalance 模式的小坑</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2018/08/08 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>昨天在写代码插入数据到 tidb 的时候，时不时报错说 connection closed。一直没找到原因。
+今天梳理代码，发现了这个坑。</p>
+
+<p>用 jdbc 连接  tidb 的时候，</p>
+
+<ul>
+<li>配置了 <code>jdbc:mysql:loadbalance</code> 模式（后面有多台 tidb，暂时还没有 load balance，只能先通过这种方式来搞）。</li>
+<li>然后 jdbc 连接中没有显式的配置用哪个库。</li>
+</ul>
+
+<p>这个时候，mysql client 底层在做 loadblance 的时候，会把之前 connection 的状态 sync 到新的 connection 上。这里面包括了：</p>
+
+<ul>
+<li>auto commit</li>
+<li>catalog</li>
+<li>isolation level</li>
+<li>max rows</li>
+</ul>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">  <span style="color:#cdcaa9;font-weight:bold">void</span> <span style="color:#ff0086;font-weight:bold">syncSessionState</span>(Connection source, Connection target, <span style="color:#cdcaa9;font-weight:bold">boolean</span> readOnly) <span style="color:#fb660a;font-weight:bold">throws</span> SQLException {
+        <span style="color:#fb660a;font-weight:bold">if</span> (target != <span style="color:#fb660a;font-weight:bold">null</span>) {
+            target.<span style="color:#ff0086;font-weight:bold">setReadOnly</span>(readOnly);
+        }
+
+        <span style="color:#fb660a;font-weight:bold">if</span> (source == <span style="color:#fb660a;font-weight:bold">null</span> || target == <span style="color:#fb660a;font-weight:bold">null</span>) {
+            <span style="color:#fb660a;font-weight:bold">return</span>;
+        }
+
+        <span style="color:#cdcaa9;font-weight:bold">boolean</span> prevUseLocalSessionState = source.<span style="color:#ff0086;font-weight:bold">getUseLocalSessionState</span>();
+        source.<span style="color:#ff0086;font-weight:bold">setUseLocalSessionState</span>(<span style="color:#fb660a;font-weight:bold">true</span>);
+
+        target.<span style="color:#ff0086;font-weight:bold">setAutoCommit</span>(source.<span style="color:#ff0086;font-weight:bold">getAutoCommit</span>());
+        target.<span style="color:#ff0086;font-weight:bold">setCatalog</span>(source.<span style="color:#ff0086;font-weight:bold">getCatalog</span>());
+        target.<span style="color:#ff0086;font-weight:bold">setTransactionIsolation</span>(source.<span style="color:#ff0086;font-weight:bold">getTransactionIsolation</span>());
+        target.<span style="color:#ff0086;font-weight:bold">setSessionMaxRows</span>(source.<span style="color:#ff0086;font-weight:bold">getSessionMaxRows</span>());
+
+        source.<span style="color:#ff0086;font-weight:bold">setUseLocalSessionState</span>(prevUseLocalSessionState);
+    }</code></pre></div>
+<p>需要注意了，连接配置中没有设置 catalog，所以会是空字符串。</p>
+
+<p><code>setCatalog</code> 拿到这个空字符串，会发送  <strong>USE ``</strong>  命令到 Server 端。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">            StringBuilder query = <span style="color:#fb660a;font-weight:bold">new</span> StringBuilder(<span style="color:#0086d2">&#34;USE &#34;</span>);
+            query.<span style="color:#ff0086;font-weight:bold">append</span>(StringUtils.<span style="color:#ff0086;font-weight:bold">quoteIdentifier</span>(catalog, quotedId, getPedantic()));
+
+            execSQL(<span style="color:#fb660a;font-weight:bold">null</span>, query.<span style="color:#ff0086;font-weight:bold">toString</span>(), -1, <span style="color:#fb660a;font-weight:bold">null</span>, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, <span style="color:#fb660a;font-weight:bold">false</span>, <span style="color:#fb660a;font-weight:bold">this</span>.<span style="color:#ff0086;font-weight:bold">database</span>, <span style="color:#fb660a;font-weight:bold">null</span>, <span style="color:#fb660a;font-weight:bold">false</span>);
+
+            <span style="color:#fb660a;font-weight:bold">this</span>.<span style="color:#ff0086;font-weight:bold">database</span> = catalog;</code></pre></div>
+<p>TiDB（2.0.2） 对于这样的命令，会直接报错说找不到 database。</p>
+
+<pre><code>Server version: 5.7.10-TiDB-v2.0.2 MySQL Community Server (Apache License 2.0)
+
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql&gt; use ``;
+ERROR 1049 (42000): Unknown database ''
+</code></pre>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#fb660a;font-weight:bold">func</span> (e *SimpleExec) <span style="color:#ff0086;font-weight:bold">executeUse</span>(s *ast.UseStmt) <span style="color:#cdcaa9;font-weight:bold">error</span> {
+	dbname := model.<span style="color:#ff0086;font-weight:bold">NewCIStr</span>(s.DBName)
+	dbinfo, exists := e.is.<span style="color:#ff0086;font-weight:bold">SchemaByName</span>(dbname)
+	<span style="color:#fb660a;font-weight:bold">if</span> !exists {
+		<span style="color:#fb660a;font-weight:bold">return</span> infoschema.ErrDatabaseNotExists.<span style="color:#ff0086;font-weight:bold">GenByArgs</span>(dbname)
+	}
+	e.ctx.<span style="color:#ff0086;font-weight:bold">GetSessionVars</span>().CurrentDB = dbname.O
+	<span style="color:#080;background-color:#0f140f;font-style:italic">// character_set_database is the character set used by the default database.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>	<span style="color:#080;background-color:#0f140f;font-style:italic">// The server sets this variable whenever the default database changes.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>	<span style="color:#080;background-color:#0f140f;font-style:italic">// See http://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_character_set_database
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>	sessionVars := e.ctx.<span style="color:#ff0086;font-weight:bold">GetSessionVars</span>()
+	terror.<span style="color:#ff0086;font-weight:bold">Log</span>(errors.<span style="color:#ff0086;font-weight:bold">Trace</span>(sessionVars.<span style="color:#ff0086;font-weight:bold">SetSystemVar</span>(variable.CharsetDatabase, dbinfo.Charset)))
+	terror.<span style="color:#ff0086;font-weight:bold">Log</span>(errors.<span style="color:#ff0086;font-weight:bold">Trace</span>(sessionVars.<span style="color:#ff0086;font-weight:bold">SetSystemVar</span>(variable.CollationDatabase, dbinfo.Collate)))
+	<span style="color:#fb660a;font-weight:bold">return</span> <span style="color:#fb660a;font-weight:bold">nil</span>
+}</code></pre></div>
+<p>MySQL 会报错说 No database selected 。</p>
+
+<pre><code>Server version: 5.6.24-72.2-log Percona Server (GPL), Release 72.2, Revision 8d0f85b
+
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql&gt; use ``;
+ERROR 1046 (3D000): No database selected
+</code></pre>
+
+<p>在 mysql(tidb) 报错的情况下， load balance 就会 close 这个 connection，上层业务报错。</p>
+
+<h3 id="解决方法">解决方法</h3>
+
+<p>在 url 中，显式的指定库名，如 <code>jdbc:mysql:loadbalance/localhost:2379/testdb</code></p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

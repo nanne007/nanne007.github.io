@@ -3,12 +3,12 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/</loc>
+    <loc>/notes/memory_order/</loc>
     <lastmod>2019-03-14T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/notes/memory_order/</loc>
+    <loc>/</loc>
     <lastmod>2019-03-14T00:00:00+00:00</lastmod>
   </url>
   
@@ -28,6 +28,11 @@
   </url>
   
   <url>
+    <loc>/notes/about-sub-compaction-in-rocksdb/</loc>
+    <lastmod>2018-12-15T22:20:32+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/notes/raft-revisited/</loc>
     <lastmod>2018-12-10T00:00:00+00:00</lastmod>
   </url>
@@ -38,8 +43,38 @@
   </url>
   
   <url>
+    <loc>/posts/lsm-tree-compaction-strategy/</loc>
+    <lastmod>2018-10-23T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/notes/about_isolation/</loc>
     <lastmod>2018-09-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/a-strange-behavior-in-jdbc-loadbalance-mode-using-tidb/</loc>
+    <lastmod>2018-08-08T22:38:50+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/tidb-scheduler/</loc>
+    <lastmod>2018-05-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/tikv-params-optimization/</loc>
+    <lastmod>2018-04-08T22:51:24+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/intro-to-tidb/</loc>
+    <lastmod>2018-03-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/update-in-tidb/</loc>
+    <lastmod>2018-02-28T22:46:26+08:00</lastmod>
   </url>
   
   <url>
@@ -48,13 +83,103 @@
   </url>
   
   <url>
+    <loc>/notes/what-a-good-confserver-should-have/</loc>
+    <lastmod>2017-06-13T23:14:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/why-ruby-is-dying/</loc>
+    <lastmod>2016-12-24T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/railway-oriented-programming/</loc>
+    <lastmod>2016-08-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/about-elixir/</loc>
+    <lastmod>2016-06-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/notes/job-finding/</loc>
     <lastmod>2015-09-21T00:00:00+00:00</lastmod>
   </url>
   
   <url>
+    <loc>/posts/about-es6/</loc>
+    <lastmod>2015-06-15T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/type-level-programming/</loc>
+    <lastmod>2015-06-13T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/about-monad/</loc>
+    <lastmod>2014-12-24T00:33:18+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/meta-programming-in-ruby/</loc>
+    <lastmod>2014-10-16T00:14:07+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/posts/about-ycombinator/</loc>
     <lastmod>2014-10-14T22:59:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/goto-statement/</loc>
+    <lastmod>2014-10-10T23:04:30+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/config-in-sinatra/</loc>
+    <lastmod>2014-10-09T00:11:45+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/euclid-formula/</loc>
+    <lastmod>2014-07-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/packrat-parsing-in-scala/</loc>
+    <lastmod>2014-05-26T23:01:26+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/call-cc/</loc>
+    <lastmod>2014-03-23T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/prime-generator-in-ruby-std/</loc>
+    <lastmod>2013-12-09T00:19:12+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/tailcall-and-cps/</loc>
+    <lastmod>2013-11-23T00:22:07+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/scala-basics/</loc>
+    <lastmod>2013-08-10T00:25:23+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/loop-and-a-half/</loc>
+    <lastmod>2013-03-29T00:31:12+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/thor-usage/</loc>
+    <lastmod>2013-03-09T00:17:18+08:00</lastmod>
   </url>
   
   <url>

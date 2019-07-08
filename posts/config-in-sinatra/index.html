@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Sinatra 应用的配置 | Give me five</title>
+    <meta name="DC.Title" content="Sinatra 应用的配置">
+  
+
+  
+    <meta name="DC.Date" content="2014/10/09">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="在 Sinatra 中，经常需要使用 set、enable、disable 这些函数来配置应用， 并在请求上下文通过 settings 访问这些配置。
+例如：
+# example 1 set :author, &amp;#34;XXX&amp;#34; get &amp;#34;/app/author&amp;#34; do &amp;#34;the author is &amp;#34; &#43; settings.author end 也可以利用代码块来设置：
+# example 2 set(:author) do # do something here “XXX” end 同时，可以使用 Proc 访问其他设置选项：
+# example 3 set :app_info, Proc.new do &amp;#34;desc: &amp;#34; &#43; &amp;#34;app about how to use set.&amp;#34; &#43; author end 另外，传递一个哈希表给 set 函数，可以一次配置多个选项：
+# example 4 set author: &amp;#34;XXX&amp;#34;, app_info: Proc.">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/config-in-sinatra/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Sinatra 应用的配置</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/10/09 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>在 Sinatra 中，经常需要使用 <code>set</code>、<code>enable</code>、<code>disable</code> 这些函数来配置应用，
+并在请求上下文通过 <code>settings</code> 访问这些配置。</p>
+
+<p>例如：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#080;background-color:#0f140f;font-style:italic"># example 1</span>
+set <span style="color:#0086d2">:author</span>, <span style="color:#0086d2">&#34;XXX&#34;</span>
+get <span style="color:#0086d2">&#34;/app/author&#34;</span> <span style="color:#fb660a;font-weight:bold">do</span>
+  <span style="color:#0086d2">&#34;the author is &#34;</span> + settings.author
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>也可以利用代码块来设置：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#080;background-color:#0f140f;font-style:italic"># example 2</span>
+set(<span style="color:#0086d2">:author</span>) <span style="color:#fb660a;font-weight:bold">do</span>
+  <span style="color:#080;background-color:#0f140f;font-style:italic"># do something here</span>
+  “<span style="color:#0086d2">XXX</span>”
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>同时，可以使用 <code>Proc</code> 访问其他设置选项：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#080;background-color:#0f140f;font-style:italic"># example 3</span>
+set <span style="color:#0086d2">:app_info</span>, <span style="color:#0086d2">Proc</span>.new <span style="color:#fb660a;font-weight:bold">do</span>
+  <span style="color:#0086d2">&#34;desc: &#34;</span> + <span style="color:#0086d2">&#34;app about how to use set.&#34;</span> + author
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>另外，传递一个哈希表给 <code>set</code> 函数，可以一次配置多个选项：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#080;background-color:#0f140f;font-style:italic"># example 4</span>
+set <span style="color:#0086d2">author</span>: <span style="color:#0086d2">&#34;XXX&#34;</span>, <span style="color:#0086d2">app_info</span>: <span style="color:#0086d2">Proc</span>.new { <span style="color:#0086d2">&#34;desc: &#34;</span> + <span style="color:#0086d2">&#34;app about how to use set.&#34;</span> + author }</code></pre></div>
+<p>初次使用这些的时候，时常会被下面这样的问题困扰着。
+- <code>settings</code> 是什么？
+- 为什么在 <code>settings</code> 上可以访问用 <code>set</code> 方法设置的选项？
+- 为什么在请求上下文要通过 <code>settings</code> 访问配置选项，而不同配置选项却可以互相访问，正如 <strong>example 3</strong> 所做的那样？</p>
+
+<p>要想解决这些问题，首先需要去了解 Sinatra 的作用域。</p>
+
+<h2 id="sinatra-的作用域">Sinatra 的作用域</h2>
+
+<p>大家都知道，Ruby 的作用域门决定了不同作用域下所能访问的方法和变量。</p>
+
+<p>“[scopes and binding in sinatra readme](&ldquo;<a href="http://www.sinatrarb.com/intro.html#Scopes%20and%20Binding&quot;)”">http://www.sinatrarb.com/intro.html#Scopes%20and%20Binding&quot;)”</a> 介绍了 Sinatra 的三种不同的作用域。
+- 应用层作用域或者说类作用域（Application/Class Scope）
+- 请求作用域或者说实例作用域（Request/Instance Scope）
+- 委托作用域（Delegation Scope）</p>
+
+<p>下面逐一介绍这三个作用域。</p>
+
+<h3 id="应用层作用域">应用层作用域</h3>
+
+<p>每个 Sinatra 应用都是 <code>Sinatra::Base</code> 的子类。
+因此，<code>Base</code> 的类方法，比如 <code>get</code>, <code>before</code>, <code>set</code>，都可以在子类作用域中使用。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">require <span style="color:#0086d2">&#39;sinatra/base&#39;</span>
+<span style="color:#fb660a;font-weight:bold">class</span> MyApp &lt; <span style="color:#0086d2">Sinatra</span>::<span style="color:#0086d2">Base</span>
+  set <span style="color:#0086d2">:author</span>, <span style="color:#0086d2">&#34;XXX&#34;</span>
+  get <span style="color:#0086d2">&#34;/app_info&#34;</span> <span style="color:#fb660a;font-weight:bold">do</span>
+    <span style="color:#0086d2">&#34;app name: MyApp&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<h3 id="请求作用域">请求作用域</h3>
+
+<p>每一个请求都会有一个实例与之对应，处理逻辑都是在这个实例的上下文中进行的。
+在这个作用域中，可以使用 <code>Base</code> 的实例方法，像 <code>settings</code>, <code>halt</code>, <code>pass</code>，
+以及各种属性，像 <code>request</code>, <code>response</code>, <code>params</code>。
+由于 <code>Base</code> 混入了 <code>Helpers</code> 和 <code>Templates</code> 模块，
+也可以使用 <code>redirect</code>, <code>uri</code> 以及 <code>erb</code> 这些辅助方法。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">require <span style="color:#0086d2">&#39;sinatra/base&#39;</span>
+<span style="color:#fb660a;font-weight:bold">class</span> MyApp &lt; <span style="color:#0086d2">Sinatra</span>::<span style="color:#0086d2">Base</span>
+  set <span style="color:#0086d2">:author</span>, <span style="color:#0086d2">&#34;XXX&#34;</span>
+  get <span style="color:#0086d2">&#34;/app_info&#34;</span> <span style="color:#fb660a;font-weight:bold">do</span>
+    <span style="color:#080;background-color:#0f140f;font-style:italic"># here comes request scope</span>
+    <span style="color:#0086d2">&#34;app name: MyApp&#34;</span> + settings.author
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<h3 id="委托作用域">委托作用域</h3>
+
+<p>当使用 <code>require 'sinatra'</code> 创建一个经典的 Sinatra 应用时，委托作用域出现了。
+委托作用域中的方法被委托给应用层作用域。
+源码中，定义了一些被委托的方法。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">delegate <span style="color:#0086d2">:get</span>, <span style="color:#0086d2">:patch</span>, <span style="color:#0086d2">:put</span>, <span style="color:#0086d2">:post</span>, <span style="color:#0086d2">:delete</span>, <span style="color:#0086d2">:head</span>, <span style="color:#0086d2">:options</span>, <span style="color:#0086d2">:link</span>, <span style="color:#0086d2">:unlink</span>,
+             <span style="color:#0086d2">:template</span>, <span style="color:#0086d2">:layout</span>, <span style="color:#0086d2">:before</span>, <span style="color:#0086d2">:after</span>, <span style="color:#0086d2">:error</span>, <span style="color:#0086d2">:not_found</span>, <span style="color:#0086d2">:configure</span>,
+             <span style="color:#0086d2">:set</span>, <span style="color:#0086d2">:mime_type</span>, <span style="color:#0086d2">:enable</span>, <span style="color:#0086d2">:disable</span>, <span style="color:#0086d2">:use</span>, <span style="color:#0086d2">:development?</span>, <span style="color:#0086d2">:test?</span>,
+             <span style="color:#0086d2">:production?</span>, <span style="color:#0086d2">:helpers</span>, <span style="color:#0086d2">:settings</span>, <span style="color:#0086d2">:register</span></code></pre></div>
+<h2 id="set源码">set源码</h2>
+
+<p>下面是 sinatra-1.4.4 的 <code>set</code> 实现：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> Base
+  <span style="color:#080;background-color:#0f140f;font-style:italic"># ...</span>
+
+  <span style="color:#fb660a;font-weight:bold">class</span> &lt;&lt; self
+    <span style="color:#080;background-color:#0f140f;font-style:italic"># Sets an option to the given value.  If the value is a proc,</span>
+    <span style="color:#080;background-color:#0f140f;font-style:italic"># the proc will be called every time the option is accessed.</span>
+    <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">set</span>(option, value = (not_set = <span style="color:#fb660a">true</span>), ignore_setter = <span style="color:#fb660a">false</span>, &amp;block)
+      <span style="color:#fb660a;font-weight:bold">raise</span> <span style="color:#0086d2">ArgumentError</span> <span style="color:#fb660a;font-weight:bold">if</span> block and !not_set
+      value, not_set = block, <span style="color:#fb660a">false</span> <span style="color:#fb660a;font-weight:bold">if</span> block
+
+      <span style="color:#fb660a;font-weight:bold">if</span> not_set
+        <span style="color:#fb660a;font-weight:bold">raise</span> <span style="color:#0086d2">ArgumentError</span> <span style="color:#fb660a;font-weight:bold">unless</span> option.respond_to?(<span style="color:#0086d2">:each</span>)
+        option.each { |k,v| set(k, v) }
+        <span style="color:#fb660a;font-weight:bold">return</span> self
+      <span style="color:#fb660a;font-weight:bold">end</span>
+
+      <span style="color:#fb660a;font-weight:bold">if</span> respond_to?(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">#{</span>option<span style="color:#0086d2">}</span><span style="color:#0086d2">=&#34;</span>) and not ignore_setter
+        <span style="color:#fb660a;font-weight:bold">return</span> __send__(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">#{</span>option<span style="color:#0086d2">}</span><span style="color:#0086d2">=&#34;</span>, value)
+      <span style="color:#fb660a;font-weight:bold">end</span>
+
+      setter = proc { |val| set option, val, <span style="color:#fb660a">true</span> }
+      getter = proc { value }
+
+      <span style="color:#fb660a;font-weight:bold">case</span> value
+      <span style="color:#fb660a;font-weight:bold">when</span> <span style="color:#0086d2">Proc</span>
+        getter = value
+      <span style="color:#fb660a;font-weight:bold">when</span> <span style="color:#0086d2">Symbol</span>, <span style="color:#0086d2">Fixnum</span>, <span style="color:#0086d2">FalseClass</span>, <span style="color:#0086d2">TrueClass</span>, <span style="color:#0086d2">NilClass</span>
+        getter = value.inspect
+      <span style="color:#fb660a;font-weight:bold">when</span> <span style="color:#0086d2">Hash</span>
+        setter = proc <span style="color:#fb660a;font-weight:bold">do</span> |val|
+          val = value.merge val <span style="color:#fb660a;font-weight:bold">if</span> <span style="color:#0086d2">Hash</span> === val
+          set option, val, <span style="color:#fb660a">true</span>
+        <span style="color:#fb660a;font-weight:bold">end</span>
+      <span style="color:#fb660a;font-weight:bold">end</span>
+
+      define_singleton(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">#{</span>option<span style="color:#0086d2">}</span><span style="color:#0086d2">=&#34;</span>, setter) <span style="color:#fb660a;font-weight:bold">if</span> setter
+      define_singleton(option, getter) <span style="color:#fb660a;font-weight:bold">if</span> getter
+      define_singleton(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">#{</span>option<span style="color:#0086d2">}</span><span style="color:#0086d2">?&#34;</span>, <span style="color:#0086d2">&#34;!!</span><span style="color:#0086d2">#{</span>option<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>) <span style="color:#fb660a;font-weight:bold">unless</span> method_defined? <span style="color:#0086d2">&#34;</span><span style="color:#0086d2">#{</span>option<span style="color:#0086d2">}</span><span style="color:#0086d2">?&#34;</span>
+      self
+    <span style="color:#fb660a;font-weight:bold">end</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+
+  <span style="color:#080;background-color:#0f140f;font-style:italic"># ...</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

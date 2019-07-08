@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>call/cc | Give me five</title>
+    <meta name="DC.Title" content="call/cc">
+  
+
+  
+    <meta name="DC.Date" content="2014/03/23">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="CPS 在利用 continuation 编程之前，需要认识一种编程风格：Continuation Passing Style(CPS)。 在 CPS 中，每一个过程（或者说函数）都接受一个额外的参数，这个参数代表了 对该过程调用结果的处理 。
+举个例子：
+以下这段代码以递归的形式计算前 n 个数的乘积。
+(define (factorial n) (if (= n 0) 1 ; NOT tail-recursive (* n (factorial (- n 1))))) 如何把它变成 CPS 形式的呢？
+首先给 factorial 加一个额外的参数 k， 这个 k 代表了当 factorial 调用结束后要执行的动作。
+; postfix a &amp;amp; to represent the cps version of a function (define (factorial&amp;amp; n k) ???) 接下来的唯一“复杂”的地方就是 (* n (factorial (- n 1))) 了。 这个表达式中，先有 (- n 1) 调用，然后是 factorial，乘法是最后一步计算。 需要做的同上：给 factorial 调用加上一个 k 参数。">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/call-cc/">
+  
+
+  
+    <meta name="keywords" content="cps,continuation,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>call/cc</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/03/23 
+    
+
+    
+</header>
+
+<article>
+
+
+<h3 id="cps">CPS</h3>
+
+<p>在利用 continuation 编程之前，需要认识一种编程风格：Continuation Passing Style(CPS)。
+在 CPS 中，每一个过程（或者说函数）都接受一个额外的参数，这个参数代表了 <em>对该过程调用结果的处理</em> 。</p>
+
+<p>举个例子：</p>
+
+<p>以下这段代码以递归的形式计算前 n 个数的乘积。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">define</span> (factorial n)
+ (<span style="color:#fb660a;font-weight:bold">if</span> (= n <span style="color:#0086f7;font-weight:bold">0</span>)
+  <span style="color:#0086f7;font-weight:bold">1</span>     <span style="color:#080;background-color:#0f140f;font-style:italic">; NOT tail-recursive</span>
+  (* n (factorial (- n <span style="color:#0086f7;font-weight:bold">1</span>)))))</code></pre></div>
+<p>如何把它变成 CPS 形式的呢？</p>
+
+<p>首先给 <code>factorial</code> 加一个额外的参数 <code>k</code>，
+这个 <code>k</code> 代表了当 <code>factorial</code> 调用结束后要执行的动作。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket"><span style="color:#080;background-color:#0f140f;font-style:italic">; postfix a &amp; to represent the cps version of a function</span>
+(<span style="color:#fb660a;font-weight:bold">define</span> (factorial&amp; n k)
+ ???)</code></pre></div>
+<p>接下来的唯一“复杂”的地方就是 <code>(* n (factorial (- n 1)))</code> 了。
+这个表达式中，先有 <code>(- n 1)</code> 调用，然后是 <code>factorial</code>，乘法是最后一步计算。
+需要做的同上：给 <code>factorial</code> 调用加上一个 <code>k</code> 参数。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">define</span> (factorial&amp; n k)
+ (<span style="color:#fb660a;font-weight:bold">if</span> (= n <span style="color:#0086f7;font-weight:bold">0</span>)
+  <span style="color:#0086f7;font-weight:bold">1</span>
+  (factorial&amp; (- n <span style="color:#0086f7;font-weight:bold">1</span>) (<span style="color:#fb660a;font-weight:bold">lambda</span> (fact) <span style="color:#080;background-color:#0f140f;font-style:italic">; use a lambda to represent the computation</span>
+					   (* n fact)))))</code></pre></div>
+<p><code>k</code> 在这里用一个 lambda 表示，lambda 封装了 <code>factorial</code> 调用之后的动作，并接收调用结果作为参数 <code>fact</code>。</p>
+
+<p>得到的这个就是 CPS 形式的 <code>factorial</code>。
+调用它的时候，需要显式提供一个过程用来接收过程调用结果，
+比如这样： <code>(factorial&amp; 10 (lambda (x) (display x) (newline)))</code>。</p>
+
+<p>我仿照 <a href="http://en.wikipedia.org/wiki/Continuation#cite_note-cont-sandwich-3">continuation sandwich</a> 写了一个中文类比：</p>
+
+<blockquote>
+<p>假设现在你走进<strong>厨房</strong>，想做一碗<strong>西红柿鸡蛋面</strong>给自己吃，或者给女朋友吃。
+无论是做给谁吃，还是想拿它做其他事情，暂且把它写在纸条上揣进兜里。
+现在，你从冰箱里拿出来两个鸡蛋，一份面，当然还有可爱的西红柿，然后花个十分钟做好这份面。
+这个时候，你再从兜里把纸条拿出来，还原当时的情景，看看自己做面是想干什么：依旧在厨房里，想着一碗西红柿鸡蛋面，做好了给女朋友吃。
+接着这个思路，这个时候你会发现一份热腾腾的西红柿鸡蛋面已经摆在了你的面前，可以该干嘛干嘛了。</p>
+</blockquote>
+
+<p><em>参数 <code>k</code> 和纸条上的想法就是所说的 continuation。
+可能你也会发现 javascript 最为“出名”的 <a href="http://en.wikipedia.org/wiki/Callback_(computer_programming)">callback</a> 也是 continuation。</em></p>
+
+<blockquote>
+<p>在 Racket 中，<code>=</code>、<code>*</code> 都是过程调用，严格来说，也需要做 CPS 变换。</p>
+
+<p>下面给出详细的 CPS 转换过程，如果不感兴趣或者已熟谙于心，可以直接跳过。:)</p>
+</blockquote>
+
+<h4 id="factorial-完整的-cps-变换"><code>factorial</code> 完整的 CPS 变换</h4>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">define</span> (factorial&amp; n k)
+ (=&amp; n <span style="color:#0086f7;font-weight:bold">0</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (b)
+		  (<span style="color:#fb660a;font-weight:bold">if</span> b
+			  (k <span style="color:#0086f7;font-weight:bold">1</span>)
+			  ???))))</code></pre></div>
+<p>接下来变换 <code>(* n (factorial (- n 1)))</code>。
+前面提到过，这个表达式中，先有 <code>(- n 1)</code> 调用，然后是 <code>factorial</code>，乘法是最后一步计算。
+依照先后顺序，可以依次作如下变换：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket"><span style="color:#080;background-color:#0f140f;font-style:italic">; cps of (- n 1)</span>
+(<span style="color:#fb660a;font-weight:bold">define</span> (factorial&amp; n k)
+ (=&amp; n <span style="color:#0086f7;font-weight:bold">0</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (b)
+		  (<span style="color:#fb660a;font-weight:bold">if</span> b
+			  (k <span style="color:#0086f7;font-weight:bold">1</span>)
+			  (-&amp; n <span style="color:#0086f7;font-weight:bold">1</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (nm1)
+					   ???)))))
+
+<span style="color:#080;background-color:#0f140f;font-style:italic">; cps of (factorial (- n 1))</span>
+(<span style="color:#fb660a;font-weight:bold">define</span> (factorial&amp; n k)
+ (=&amp; n <span style="color:#0086f7;font-weight:bold">0</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (b)
+		  (<span style="color:#fb660a;font-weight:bold">if</span> b
+			  (k <span style="color:#0086f7;font-weight:bold">1</span>)
+			  (-&amp; n <span style="color:#0086f7;font-weight:bold">1</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (nm1)
+					   (factorial&amp; nm1 (<span style="color:#fb660a;font-weight:bold">lambda</span> (factor)
+										???)))))))
+
+<span style="color:#080;background-color:#0f140f;font-style:italic">; cps of (* n (factorial (- n 1))), and that&#39;s it!</span>
+(<span style="color:#fb660a;font-weight:bold">define</span> (factorial&amp; n k)
+ (=&amp; n <span style="color:#0086f7;font-weight:bold">0</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (b)
+		  (<span style="color:#fb660a;font-weight:bold">if</span> b
+			  (k <span style="color:#0086f7;font-weight:bold">1</span>)
+			  (-&amp; n <span style="color:#0086f7;font-weight:bold">1</span> (<span style="color:#fb660a;font-weight:bold">lambda</span> (nm1)
+					   (factorial&amp; nm1 (<span style="color:#fb660a;font-weight:bold">lambda</span> (fact)
+										(*&amp; n fact k))))))))</code></pre></div>
+<h3 id="call-cc">call/cc</h3>
+
+<p>continuation 就是这么个玩意儿，Scheme 提供了 call-with-current-continuation(call/cc) 来利用它编程。</p>
+
+<p>call/cc 接受一个函数 <code>f</code> 作为参数，并把当前的 continuation 打包成函数，传递给 <code>f</code>，continuation 只能进行函数应用操作。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket"><span style="color:#080;background-color:#0f140f;font-style:italic">; define a function f, take a function argument k</span>
+(<span style="color:#fb660a;font-weight:bold">define</span> (f k)
+  (k <span style="color:#0086f7;font-weight:bold">1</span>)
+  (display <span style="color:#0086f7;font-weight:bold">2</span>))
+
+(display (call/cc f))
+
+(display <span style="color:#0086f7;font-weight:bold">3</span>)</code></pre></div>
+<p>分析下这个程序，先确定调用 <code>call/cc</code> 时的 *current continuation*：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">lambda</span> (x)
+ (display x)
+ (display <span style="color:#0086f7;font-weight:bold">3</span>))</code></pre></div>
+<p>参数 <code>x</code> 是 <code>call/cc</code> 调用的返回值，所谓的 <em>current continuation</em> 就是 <code>call/cc</code> 之后需要执行的代码块。</p>
+
+<p>之后，这样的一个 continuation 就作为参数 <code>k</code> 传递给了 <code>call/cc</code> 的参数 <code>f</code>。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(f (<span style="color:#fb660a;font-weight:bold">lambda</span> (x)
+    (display x)
+    (display <span style="color:#0086f7;font-weight:bold">3</span>)))</code></pre></div>
+<p>在 <code>f</code> 的执行流中，<code>k</code> 的应用使得 <code>k</code> 中的执行流取代了之后的执行流 (即：<code>(lambda (y) (display 2))</code>)，
+程序的运行由 <code>k</code> 中的执行流决定：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">((<span style="color:#fb660a;font-weight:bold">lambda</span> (x)
+  (display x)
+  (display <span style="color:#0086f7;font-weight:bold">3</span>))
+ <span style="color:#0086f7;font-weight:bold">1</span>)</code></pre></div>
+<p>也可以保存 <code>call/cc</code> 创建出来的 continuation，以便反复使用。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">define</span> cont <span style="color:#0086d2">#f</span>)
+(display (call/cc (<span style="color:#fb660a;font-weight:bold">lambda</span> (k) (<span style="color:#fb660a;font-weight:bold">set!</span> cont k))))
+
+(cont <span style="color:#0086f7;font-weight:bold">1</span>)
+(cont <span style="color:#0086f7;font-weight:bold">2</span>)
+(cont <span style="color:#0086f7;font-weight:bold">3</span>)</code></pre></div>
+<p>这就是 <code>call/cc</code>。</p>
+
+<h3 id="delimited-continuation-定界延续">delimited continuation(定界延续)</h3>
+
+<p><code>call/cc</code> 无法控制 continuation 的边界，<code>call/cc</code> 调用之后的执行流都包含在 continuation 之内。
+<strong>delimited continuation</strong> 是用来解决这个问题的，它将 continuation 控制在某一个范围内，比如说，</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(reset (display <span style="color:#0086f7;font-weight:bold">0</span>)
+       (display (+ <span style="color:#0086f7;font-weight:bold">1</span> (shift k (<span style="color:#fb660a;font-weight:bold">begin</span>
+                       (k <span style="color:#0086f7;font-weight:bold">0</span>)
+                       (display <span style="color:#0086f7;font-weight:bold">3</span>)))))
+       (display <span style="color:#0086f7;font-weight:bold">2</span>))
+(display <span style="color:#0086f7;font-weight:bold">4</span>)</code></pre></div>
+<p><code>shift</code> 就类似于 <code>call/cc</code> 的参数 <code>f</code> ，接收一个 continuation <code>k</code>，
+而<code>reset</code> 则界定了 continuation 能够作用的范围。
+在 <code>reset</code> 中调用 <code>shift</code> 时，<code>shift</code> 中的 continuation 就被限制在 <code>reset</code> 决定的范围里。</p>
+
+<p>不过这里需要注意一点：<code>shift</code> 中，当 <code>(k 0)</code> 调用完毕后，执行流会继续往下执行 <code>(display 3)</code>，然后从这里跳出 <code>reset</code>。
+<code>shift</code> 的使用使得执行流从 <code>reset</code> 转换到 <code>shift</code>，并以此结束 <code>reset</code>。</p>
+
+<h3 id="next">next&hellip;</h3>
+
+<p>网上有很多相关的资料，我也考过许多，不过 Jim Mcbeath 的<a href="http://jim-mcbeath.blogspot.com/2010/08/delimited-continuations.html">delimited continuations</a> 让我真正明白 continuation 做了一件什么事情。
+下一步，想搞清楚为什么要有 continuation，具体实现上对闭包的处理，以及和尾递归优化的关系。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

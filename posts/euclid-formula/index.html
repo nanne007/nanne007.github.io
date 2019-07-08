@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>勾股数与 Euclid&#39;s formula | Give me five</title>
+    <meta name="DC.Title" content="勾股数与 Euclid&#39;s formula">
+  
+
+  
+    <meta name="DC.Date" content="2014/07/10">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="勾股定理想必大家都知道，勾股数就是勾股定理中的那三个数组成的数对，即 a2 &#43; b2 = c2 中的 (a, b, c)。
+那 Euclid&amp;rsquo;s formula 是什么呢？维基上是这么解释的：给定两个正整数 m 和 n，其中 m &amp;gt; n，可以用 Euclid&amp;rsquo;s formula 来生成勾股数。
+公式如下：
+a = m2 - n2，b = 2mn，c = m2 &#43; n2
+请注意，这个公式并不能生成所有的勾股数，但是使用另外一种方法就可以。
+生成所有勾股数  首先说明一下素勾股数的概念：如果勾股数 a, b, c 三者之间互质（最大公因数为1），那么就称之为素勾股数。 而所有的勾股数都可以由素勾股数乘以一个正整数 k 得到：k(a, b, c)，其中，(a, b, c) 是素勾股数。  那现在的问题就变成如何生成素勾股数了。方法还是 Euclid&amp;rsquo;s formula 。
+ 所有的素勾股数都可以由一对互质的整数 m 和 n（其中 m &amp;gt; n，且其中一个是偶数）通过 Euclid&amp;rsquo; formula 生成。
+ 通过 Euclid&amp;rsquo; formula 就可以生成所有的素勾股数。">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/euclid-formula/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="主页">主页</a>
+      
+      
+        <a href="../../posts/" title="文章">文章</a>
+      
+      
+        <a href="../../notes/" title="笔记">笔记</a>
+      
+      
+        <a href="../../projects/" title="项目">项目</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="订阅">订阅</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>勾股数与 Euclid&#39;s formula</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/07/10 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>勾股定理想必大家都知道，勾股数就是勾股定理中的那三个数组成的数对，即 a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup> 中的 (a, b, c)。</p>
+
+<p>那 Euclid&rsquo;s formula 是什么呢？维基上是这么解释的：给定两个正整数 m 和 n，其中 m &gt; n，可以用 Euclid&rsquo;s formula 来生成勾股数。</p>
+
+<p>公式如下：</p>
+
+<p>a = m<sup>2</sup> - n<sup>2</sup>，b = 2mn，c = m<sup>2</sup> + n<sup>2</sup></p>
+
+<p>请注意，<strong>这个公式并不能生成所有的勾股数</strong>，但是使用另外一种方法就可以。</p>
+
+<h3 id="生成所有勾股数">生成所有勾股数</h3>
+
+<ol>
+<li>首先说明一下素勾股数的概念：如果勾股数 a, b, c 三者之间互质（最大公因数为1），那么就称之为素勾股数。</li>
+<li>而所有的勾股数都可以由素勾股数乘以一个正整数 k 得到：k(a, b, c)，其中，(a, b, c) 是素勾股数。</li>
+</ol>
+
+<p>那现在的问题就变成如何生成素勾股数了。方法还是 Euclid&rsquo;s formula 。</p>
+
+<blockquote>
+<p>所有的素勾股数都可以由一对互质的整数 m 和 n（其中 m &gt; n，且其中一个是偶数）通过 Euclid&rsquo; formula 生成。</p>
+</blockquote>
+
+<p>通过 Euclid&rsquo; formula 就可以生成所有的素勾股数。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>Euclid&rsquo; formula 虽然可以生成所有的素勾股数，但无法生成所有的勾股数。必须通过素勾股数外加一个乘因子得到，即：</p>
+
+<p>a = k(m<sup>2</sup> - n<sup>2</sup>)，b = k(2mn)，c = k(m<sup>2</sup> + n<sup>2</sup>), 其中，m 和 n 互质，m &gt; n，且其中一个是偶数。</p>
+
+<h3 id="更新1">更新1</h3>
+
+<p>刚刚发现另一种生成所有的素勾股数的方法：<a href="https://en.wikipedia.org/wiki/Tree_of_primitive_Pythagorean_triples">Tree of primitive Pythagorean triples</a>。</p>
+
+<p>太优雅了！</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
