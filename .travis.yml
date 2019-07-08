@@ -1,18 +1,17 @@
-language: go
-go:
-    - master
-
 # before_install
 # install - install any dependencies required
 install:
-    - go get github.com/gohugoio/hugo
+  - uname -a
+  - curl -LO https://github.com/gohugoio/hugo/releases/download/v0.55.4/hugo_0.55.4_Linux-64bit.deb
+  - sudo dpkg -i hugo_*.deb
+  - hugo version
 
 before_script:
-    - rm -rf public 2> /dev/null
+  - rm -rf public 2> /dev/null
 
 # script - run the build script
 script:
-    - hugo 2> /dev/null
+  - hugo 2> /dev/null
 
 deploy:
   provider: pages
