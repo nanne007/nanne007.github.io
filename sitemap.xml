@@ -118,11 +118,6 @@
   </url>
   
   <url>
-    <loc>/posts/about-monad/</loc>
-    <lastmod>2014-12-24T00:33:18+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>/posts/meta-programming-in-ruby/</loc>
     <lastmod>2014-10-16T00:14:07+08:00</lastmod>
   </url>
@@ -155,31 +150,6 @@
   <url>
     <loc>/posts/call-cc/</loc>
     <lastmod>2014-03-23T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/posts/prime-generator-in-ruby-std/</loc>
-    <lastmod>2013-12-09T00:19:12+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/posts/tailcall-and-cps/</loc>
-    <lastmod>2013-11-23T00:22:07+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/notes/scala-basics/</loc>
-    <lastmod>2013-08-10T00:25:23+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/notes/loop-and-a-half/</loc>
-    <lastmod>2013-03-29T00:31:12+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/posts/thor-usage/</loc>
-    <lastmod>2013-03-09T00:17:18+08:00</lastmod>
   </url>
   
   <url>

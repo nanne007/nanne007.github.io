@@ -182,28 +182,5 @@ Try = Struct.new(:ok, data_or_exception) class Try def pipe(&amp;amp;block) if !
   trait Printer[T] { def print(t: T): String } implicit val sp: Printer[Int] = new Printer[Int] { def print(i :Int) = i.toString } def foo[T](t: T)(implicit p: Printer[T]) = p.print(t)  Type Class  trait CanFoo[A] { def foos(x: A): String } case class Wrapper(wrapped: String) object WrapperCanFoo extends CanFoo[Wrapper] { def foos(x: Wrapper) = x.</description>
     </item>
     
-    <item>
-      <title>Scala 基础笔记</title>
-      <link>/notes/scala-basics/</link>
-      <pubDate>Sat, 10 Aug 2013 00:25:23 +0800</pubDate>
-      
-      <guid>/notes/scala-basics/</guid>
-      <description>控制结构和函数  赋值动作本身是没有值的。  var a = 1 scala&amp;gt; val nn = (a+=1) nn: Unit = ()  scala 支持函数。只要函数不是递归的，就不需要指定返回类型。 异常中 throw 有特殊的类型 Nothing。  类、对象以及特质  下面代码中，_ 是什么意思？  class Person { var name: String = _ }  类型投影？ 在内嵌类中访问外部类？ 定义只读属性时,  val attr private var privateAttr + def attar = privateAttr   选择哪个？其他更好的方案？
- 类的伴生对象，可以访问类的私有成员。 类和其伴生对象可以相互访问私有特性？ 单例对象和伴生对象的关系？ 扩展类  使用 extends 关键字扩展类。 可以将类、字段、方法声明为 final，以确保其不会被重写。注：java 中的 final 意思与 val 类似，表示不可变。  重写方法  使用 override 修饰符来重写一个 非抽象方法 （那抽象方法？）。 使用 super 关键字来调用超类的方法。  类型检查和转换  o.</description>
-    </item>
-    
-    <item>
-      <title>Loop and a half 问题</title>
-      <link>/notes/loop-and-a-half/</link>
-      <pubDate>Fri, 29 Mar 2013 00:31:12 +0800</pubDate>
-      
-      <guid>/notes/loop-and-a-half/</guid>
-      <description>大部分的循环形式可以总结如下：
-A: S; if B then goto Z fi; T; goto A; Z: // do other stuff  当 S 为空时，可以写成 while 循环：until B do T;； 当 T 为空时，可以写成 do-while 循环：repeat S; until B;。
-但是，当 S 和 T 都不为空时，无论是写成 while 还是 do-while 总会有多余的一部分在循环之外执行：
-S; until B do begin T; S; end  inversedT; repeat T; S; until B;  这就是所谓的 loop and a half 问题。（相信大家在编程过程中都有遇到过）
-诸如：repeat begin S; when B exit; T; end 中这样的 loop/break 控制语句被添加到现代编程语言中，以解决 消除 goto 所带来的不便。</description>
-    </item>
-    
   </channel>
 </rss>
