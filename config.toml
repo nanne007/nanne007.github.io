@@ -21,27 +21,27 @@ pygmentsCodefences = true
     tutorial = "/tutorial/:slug"
 
 [[menu.main]]
-    name = "主页"
+    name = "Home"
     url = "/"
     weight = 1
 
 [[menu.main]]
-    name = "文章"
+    name = "Posts"
     url = "/posts/"
     weight = 1
 
 [[menu.main]]
-    name = "笔记"
+    name = "Notes"
     url = "/notes/"
     weight = 2
 
-[[menu.main]]
-    name = "项目"
-    url = "/projects/"
-    weight = 3
+# [[menu.main]]
+#     name = "Projects"
+#     url = "/projects/"
+#     weight = 3
 
 [[menu.feed]]
-    name = "订阅"
+    name = "RSS"
     url = "/index.xml"
     weight = 4
 
