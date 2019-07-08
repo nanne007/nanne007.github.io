@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Loop and a half 问题 | Give me five</title>
+    <meta name="DC.Title" content="Loop and a half 问题">
+  
+
+  
+    <meta name="DC.Date" content="2013/03/29">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="大部分的循环形式可以总结如下：
+A: S; if B then goto Z fi; T; goto A; Z: // do other stuff  当 S 为空时，可以写成 while 循环：until B do T;； 当 T 为空时，可以写成 do-while 循环：repeat S; until B;。
+但是，当 S 和 T 都不为空时，无论是写成 while 还是 do-while 总会有多余的一部分在循环之外执行：
+S; until B do begin T; S; end  inversedT; repeat T; S; until B;  这就是所谓的 loop and a half 问题。（相信大家在编程过程中都有遇到过）
+诸如：repeat begin S; when B exit; T; end 中这样的 loop/break 控制语句被添加到现代编程语言中，以解决 消除 goto 所带来的不便。">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/loop-and-a-half/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Loop and a half 问题</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2013/03/29 
+    
+
+    
+</header>
+
+<article>
+<p>大部分的循环形式可以总结如下：</p>
+
+<pre><code>A: S;
+    if B then goto Z fi;
+    T;
+    goto A;
+Z: // do other stuff
+</code></pre>
+
+<p>当 <code>S</code> 为空时，可以写成 <code>while</code> 循环：<code>until B do T;</code>；
+当 <code>T</code> 为空时，可以写成 <code>do-while</code> 循环：<code>repeat S; until B;</code>。</p>
+
+<p>但是，当 <code>S</code> 和 <code>T</code> 都不为空时，无论是写成 <code>while</code> 还是 <code>do-while</code> 总会有多余的一部分在循环之外执行：</p>
+
+<pre><code>S;
+until B do
+  begin
+    T;
+    S;
+  end
+</code></pre>
+
+<pre><code>inversedT;
+repeat
+  T;
+  S;
+until B;
+</code></pre>
+
+<p>这就是所谓的 <strong>loop and a half</strong> 问题。（相信大家在编程过程中都有遇到过）</p>
+
+<p>诸如：<code>repeat begin S; when B exit; T; end</code> 中这样的 <em>loop/break</em> 控制语句被添加到现代编程语言中，以解决 消除 <code>goto</code> 所带来的不便。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>命令行构建工具 - Thor | Give me five</title>
+    <meta name="DC.Title" content="命令行构建工具 - Thor">
+  
+
+  
+    <meta name="DC.Date" content="2013/03/09">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="Thor 是一个用来构建强大命令行的工具包，诸如 Bundler、Rails、Vagrant 这样的项目都在使用它。
+基本使用 Thor 类会被封装成带有多个命令的 CLI，比如 git、bundler。 类的公有方法表征命令。
+class MyCLI &amp;lt; Thor desc &amp;#34;hello NAME&amp;#34;, &amp;#34;say hello to NAME&amp;#34; def hello(name) puts &amp;#34;Hello #{name}&amp;#34; end end 有了上面的类，然后调用 MyCLI.start(ARGV)，CLI 就可以执行了。
+接下来的例子，我会假设当前目录下有一个叫 my_cli 的 ruby 源文件，内容大致是这样的。
+require &amp;#34;thor&amp;#34; class MyCLI &amp;lt; Thor # contents of the Thor class end MyCLI.start(ARGV) 如果传递给 start 的参数列表是空的，Thor 会打印出 CLI 的帮助信息。 帮助信息会自动使用 CLI 的名称。
+$ ruby ./my_cli Commands: my_cli hello NAME # say hello to NAME my_cli help [COMMAND] # Describe available commands or one specific command 带参数执行 hello 命令，就会调用 Thor 类中相应的方法。">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/thor-usage/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>命令行构建工具 - Thor</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2013/03/09 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>Thor 是一个用来构建强大命令行的工具包，诸如 Bundler、Rails、Vagrant 这样的项目都在使用它。</p>
+
+<h2 id="基本使用">基本使用</h2>
+
+<p>Thor 类会被封装成带有多个命令的 CLI，比如 <code>git</code>、<code>bundler</code>。
+类的公有方法表征命令。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name)
+    puts <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>有了上面的类，然后调用 <code>MyCLI.start(ARGV)</code>，CLI 就可以执行了。</p>
+
+<p>接下来的例子，我会假设当前目录下有一个叫 <code>my_cli</code> 的 ruby 源文件，内容大致是这样的。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">require <span style="color:#0086d2">&#34;thor&#34;</span>
+
+<span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  <span style="color:#080;background-color:#0f140f;font-style:italic"># contents of the Thor class</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#0086d2">MyCLI</span>.start(<span style="color:#0086d2">ARGV</span>)</code></pre></div>
+<p>如果传递给 <code>start</code> 的参数列表是空的，Thor 会打印出 CLI 的帮助信息。
+帮助信息会自动使用 CLI 的名称。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli
+Commands:
+  my_cli hello NAME      <span style="color:#080;background-color:#0f140f;font-style:italic"># say hello to NAME</span>
+  my_cli help [COMMAND]  <span style="color:#080;background-color:#0f140f;font-style:italic"># Describe available commands or one specific command</span></code></pre></div>
+<p>带参数执行 <code>hello</code> 命令，就会调用 Thor 类中相应的方法。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli hello world
+Hello world</code></pre></div>
+<p>如果没有带参数，Thor 会打印出错误信息。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli hello
+ERROR: my_cli hello was called with no arguments
+Usage: <span style="color:#0086d2">&#34;my_cli hello NAME&#34;</span>.</code></pre></div>
+<p>当然，也可以在 ruby 代码中使用可选参数，这样 CLI 中的参数就变成可选的了。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  desc <span style="color:#0086d2">&#39;hello NAME&#39;</span>, <span style="color:#0086d2">&#39;say hello to NAME&#39;</span> <span style="color:#080;background-color:#0f140f;font-style:italic"># usage, description</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name, from = <span style="color:#fb660a">nil</span>)
+    puts <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>from<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> from
+    puts <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>然后再执行时，</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli hello world
+Hello Yehuda Katz
+
+$ ruby ./my_cli hello world <span style="color:#0086d2">&#34;Windor C&#34;</span>
+from: Carl Lerche
+Hello Yehuda Katz</code></pre></div>
+<p>这种方法在某些情况下会有用，不过，大多数情况，你可能会更偏向于使用 <strong>Unix风格的选项</strong>。</p>
+
+<h2 id="长描述">长描述</h2>
+
+<p>Thor 默认会使用 <code>desc</code> 提供的简短描述来充当一个命令的详细描述。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli help hello
+Usage:
+  my_cli hello NAME
+
+say hello to NAME</code></pre></div>
+<p>但普遍做法是直接提供一个长描述。<code>long_desc</code> 就是用来做这件事情的。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  long_desc <span style="color:#0086d2">&lt;&lt;-LONGDESC
+</span><span style="color:#0086d2"></span>    <span style="color:#0086d2">`cli hello`</span> will print out a message to a person of your
+    choosing.
+
+    <span style="color:#0086d2">You</span> can optionally specify a second parameter, which will print
+    out a from message as well.
+
+    &gt; $ cli hello <span style="color:#0086d2">&#34;Yehuda Katz&#34;</span> <span style="color:#0086d2">&#34;Carl Lerche&#34;</span>
+
+    &gt; <span style="color:#0086d2">from</span>: <span style="color:#0086d2">Carl</span> <span style="color:#0086d2">Lerche</span>
+  <span style="color:#0086d2">LONGDESC</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name, from=<span style="color:#fb660a">nil</span>)
+    puts <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>from<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> from
+    puts <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>描述中，多加一个空行来进行换行，类似于 markdown。也可以在行首添加 <code>\x5</code> 强制换行。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">require <span style="color:#0086d2">&#39;thor&#39;</span>
+<span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  desc <span style="color:#0086d2">&#39;hello NAME&#39;</span>, <span style="color:#0086d2">&#39;say hello to NAME&#39;</span> <span style="color:#080;background-color:#0f140f;font-style:italic"># usage, description</span>
+  long_desc <span style="color:#0086d2">&lt;&lt;-LONGDESC
+</span><span style="color:#0086d2"></span>    <span style="color:#0086d2">`cli hello`</span> will print out a message to a person of your
+    choosing.
+
+    <span style="color:#0086d2">You</span> can optionally specify a second parameter, which will print
+    out a from message as well.
+
+    &gt; $ cli hello <span style="color:#0086d2">&#34;Yehuda Katz&#34;</span> <span style="color:#0086d2">&#34;Carl Lerche&#34;</span>
+    \x5&gt; <span style="color:#0086d2">from</span>: <span style="color:#0086d2">Carl</span> <span style="color:#0086d2">Lerche</span>
+  <span style="color:#0086d2">LONGDESC</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name, from = <span style="color:#fb660a">nil</span>)
+    puts <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>from<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> from
+    puts <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+<span style="color:#0086d2">MyCLI</span>.start(<span style="color:#0086d2">ARGV</span>)</code></pre></div>
+<p><strong>为了保持简短性和可读性，一般会将长描述保存在单独的文件里，然后用<code>File.read</code>从中读取所需内容。</strong></p>
+
+<h2 id="选项">选项</h2>
+
+<h3 id="基本使用-1">基本使用</h3>
+
+<p>在 Thor 中，为命令添加选项是一件非常简单的事情。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  option <span style="color:#0086d2">:from</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name)
+    puts <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>options[<span style="color:#0086d2">:from</span>]<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:from</span>]
+    puts <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>这样，<code>--from</code> 选项就可以使用了。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli hello --from <span style="color:#0086d2">&#34;Windor C&#34;</span> world
+from: Windor C
+Hello world
+
+$ ruby ./my_cli hello world --from <span style="color:#0086d2">&#34;Windor C&#34;</span>
+from: Windor C
+Hello world
+
+$ ruby ./my_cli hello world --from=<span style="color:#0086d2">&#34;Windor C&#34;</span>
+from: Windor C
+Hello world</code></pre></div>
+<h3 id="指定选项类型">指定选项类型</h3>
+
+<p>选项默认的都是字符串类型，可以使用 <code>:type</code> 为选项指定其他类型。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  option <span style="color:#0086d2">:from</span>
+  option <span style="color:#0086d2">:yell</span>, <span style="color:#0086d2">:type</span> =&gt; <span style="color:#0086d2">:boolean</span>
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name)
+    output = []
+    output &lt;&lt; <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>options[<span style="color:#0086d2">:from</span>]<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:from</span>]
+    output &lt;&lt; <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+    output = output.join(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">\n</span><span style="color:#0086d2">&#34;</span>)
+    puts options[<span style="color:#0086d2">:yell</span>] ? output.upcase : output
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>现在你可以大声的向世界问好了。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli hello  --yell world --from <span style="color:#0086d2">&#34;Windor C&#34;</span>
+FROM: WINDOR C
+HELLO WORLD
+
+$ ruby ./my_cli hello world --from <span style="color:#0086d2">&#34;Windor C&#34;</span> --yell
+FROM: WINDOR C
+HELLO WORLD</code></pre></div>
+<h3 id="指定选项为必需选项">指定选项为必需选项</h3>
+
+<p>用 <code>:required</code> 指定一个选项为必需选项。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  option <span style="color:#0086d2">:from</span>, <span style="color:#0086d2">:required</span> =&gt; <span style="color:#fb660a">true</span>
+  option <span style="color:#0086d2">:yell</span>, <span style="color:#0086d2">:type</span> =&gt; <span style="color:#0086d2">:boolean</span>
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name)
+    output = []
+    output &lt;&lt; <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>options[<span style="color:#0086d2">:from</span>]<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:from</span>]
+    output &lt;&lt; <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+    output = output.join(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">\n</span><span style="color:#0086d2">&#34;</span>)
+    puts options[<span style="color:#0086d2">:yell</span>] ? output.upcase : output
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>如果不带上 <code>--from</code> 选项，命令就会出错。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ruby ./my_cli hello world
+No value provided <span style="color:#fb660a;font-weight:bold">for</span> required options <span style="color:#0086d2">&#39;--from&#39;</span></code></pre></div>
+<h3 id="配置选项">配置选项</h3>
+
+<p>以下是可以提供给选项的所有元信息。
+- <code>:desc</code>，选项的具体说明。使用 <code>cli help hello</code>查看命令的使用方法时，说明文字会跟在选项后面一起出现。
+- <code>:banner</code>，出现在选项使用描述中的简短占位符。默认的是选项的大写， <code>[--from=FROM]</code>。
+- <code>:required</code>，表示该选项必须要出现。
+- <code>:default</code>，选项的默认值。一个选项不能既有 <code>:required</code>，又有 <code>:default</code>。
+- <code>:type</code>， <code>:string</code>、<code>:hash</code>、<code>:array</code>、<code>:numeric</code>、<code>:boolean</code>。
+- <code>:aliases</code>，选项的一系列别名。一般来说，都会用别名来提供更简短的选项。</p>
+
+<p>如果只是想配置选项的类型，那么可以用 <code>options</code> 一次性添加多个选项。
+上面的例子就可以这样写（可以直接用 <code>required</code> 表示一个必需的 <code>string</code> 类型）。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  options <span style="color:#0086d2">:from</span> =&gt; <span style="color:#0086d2">:required</span>, <span style="color:#0086d2">:yell</span> =&gt; <span style="color:#0086d2">:boolean</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name)
+    output = []
+    output &lt;&lt; <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>options[<span style="color:#0086d2">:from</span>]<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:from</span>]
+    output &lt;&lt; <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+    output = output.join(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">\n</span><span style="color:#0086d2">&#34;</span>)
+    puts options[<span style="color:#0086d2">:yell</span>] ? output.upcase : output
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<h2 id="类选项">类选项</h2>
+
+<p>如果需要为所有命令提供选项（比如说：&ndash;verbose），可以使用 <code>class_option</code>。
+类选项是应用在 CLI 所有命令上的，
+除此之外，类选项和单个命令的选项没有其他任何区别。</p>
+
+<p>ruby 代码中，提供给方法的 <code>options</code> 哈希表包含了类选项。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> MyCLI &lt; <span style="color:#0086d2">Thor</span>
+  class_option <span style="color:#0086d2">:verbose</span>, <span style="color:#0086d2">:type</span> =&gt; <span style="color:#0086d2">:boolean</span>
+
+  desc <span style="color:#0086d2">&#34;hello NAME&#34;</span>, <span style="color:#0086d2">&#34;say hello to NAME&#34;</span>
+  options <span style="color:#0086d2">:from</span> =&gt; <span style="color:#0086d2">:required</span>, <span style="color:#0086d2">:yell</span> =&gt; <span style="color:#0086d2">:boolean</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">hello</span>(name)
+    puts <span style="color:#0086d2">&#34;&gt; saying hello&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:verbose</span>]
+    output = []
+    output &lt;&lt; <span style="color:#0086d2">&#34;from: </span><span style="color:#0086d2">#{</span>options[<span style="color:#0086d2">:from</span>]<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:from</span>]
+    output &lt;&lt; <span style="color:#0086d2">&#34;Hello </span><span style="color:#0086d2">#{</span>name<span style="color:#0086d2">}</span><span style="color:#0086d2">&#34;</span>
+    output = output.join(<span style="color:#0086d2">&#34;</span><span style="color:#0086d2">\n</span><span style="color:#0086d2">&#34;</span>)
+    puts options[<span style="color:#0086d2">:yell</span>] ? output.upcase : output
+    puts <span style="color:#0086d2">&#34;&gt; done saying hello&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:verbose</span>]
+  <span style="color:#fb660a;font-weight:bold">end</span>
+
+  desc <span style="color:#0086d2">&#34;goodbye&#34;</span>, <span style="color:#0086d2">&#34;say goodbye to the world&#34;</span>
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">goodbye</span>
+    puts <span style="color:#0086d2">&#34;&gt; saying goodbye&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:verbose</span>]
+    puts <span style="color:#0086d2">&#34;Goodbye World&#34;</span>
+    puts <span style="color:#0086d2">&#34;&gt; done saying goodbye&#34;</span> <span style="color:#fb660a;font-weight:bold">if</span> options[<span style="color:#0086d2">:verbose</span>]
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<h2 id="子命令">子命令</h2>
+
+<p>当 CLI 变得越来越复杂时，一个命令可能有它自己的子命令集合。
+<code>git remote</code> 就是这样一个例子。
+<code>git</code> 是一个 CLI，<code>remote</code> 是 <code>git</code> 的一个命令。
+而 <code>remote</code> 又有 <code>add</code>、<code>rename</code>、<code>rm</code>、<code>prune</code>、<code>set-head</code> 等等多个子命令。</p>
+
+<p>在 Thor 中，可以创建一个新的 Thor 类代表子命令集合，然后在逻辑上的父类中定义一个映射指向这个新的类。</p>
+
+<p>下面是 <code>git remote</code> 的一个简易实现。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">module</span> GitCLI
+  <span style="color:#fb660a;font-weight:bold">class</span> Remote &lt; <span style="color:#0086d2">Thor</span>
+    desc <span style="color:#0086d2">&#34;add &lt;name&gt; &lt;url&gt;&#34;</span>, <span style="color:#0086d2">&#34;Adds a remote named &lt;name&gt; for the repository at &lt;url&gt;&#34;</span>
+    long_desc <span style="color:#0086d2">&lt;&lt;-LONGDESC
+</span><span style="color:#0086d2"></span>      <span style="color:#0086d2">Adds</span> a remote named &lt;name&gt; <span style="color:#fb660a;font-weight:bold">for</span> the repository at &lt;url&gt;. <span style="color:#0086d2">The</span> command git fetch &lt;name&gt; can <span style="color:#fb660a;font-weight:bold">then</span> be used to create and update
+      remote-tracking branches &lt;name&gt;<span style="color:#0086d2">/&lt;branch&gt;.
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">      With -f option, git fetch &lt;name&gt; is run immediately after the remote information is set up.
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">      With --tags option, git fetch &lt;name&gt; imports every tag from the remote repository.
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">      With --no-tags option, git fetch &lt;name&gt; does not import tags from the remote repository.
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">      With -t &lt;branch&gt; option, instead of the default glob refspec for the remote to track all branches under $GIT_DIR/</span>remotes<span style="color:#0086d2">/&lt;name&gt;/</span>, a
+      refspec to track only &lt;branch&gt; is created. <span style="color:#0086d2">You</span> can give more than one -t &lt;branch&gt; to track multiple branches without grabbing all
+      branches.
+
+      <span style="color:#0086d2">With</span> -m &lt;master&gt; option, $GIT_DIR<span style="color:#0086d2">/remotes/</span>&lt;name&gt;<span style="color:#0086d2">/HEAD is set up to point at remote&#39;s &lt;master&gt; branch. See also the set-head
+</span><span style="color:#0086d2">      command.
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">      When a fetch mirror is created with --mirror=fetch, the refs will not be stored in the refs/</span>remotes<span style="color:#0086d2">/ namespace, but rather
+</span><span style="color:#0086d2">      everything in refs/</span> on the remote will be directly mirrored into refs<span style="color:#0086d2">/ in the local repository. This option only makes sense in
+</span><span style="color:#0086d2">      bare repositories, because a fetch would overwrite any local commits.
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">      When a push mirror is created with --mirror=push, then git push will always behave as if --mirror was passed.
+</span><span style="color:#0086d2">    LONGDESC
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">    option :t, :banner =&gt; &#34;&lt;branch&gt;&#34;
+</span><span style="color:#0086d2">    option :m, :banner =&gt; &#34;&lt;master&gt;&#34;
+</span><span style="color:#0086d2">    options :f =&gt; :boolean, :tags =&gt; :boolean, :mirror =&gt; :string
+</span><span style="color:#0086d2">    def add(name, url)
+</span><span style="color:#0086d2">      # implement git remote add
+</span><span style="color:#0086d2">    end
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">    desc &#34;rename &lt;old&gt; &lt;new&gt;&#34;, &#34;Rename the remote named &lt;old&gt; to &lt;new&gt;&#34;
+</span><span style="color:#0086d2">    def rename(old, new)
+</span><span style="color:#0086d2">    end
+</span><span style="color:#0086d2">  end
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">  class Git &lt; Thor
+</span><span style="color:#0086d2">    desc &#34;fetch &lt;repository&gt; [&lt;refspec&gt;...]&#34;, &#34;Download objects and refs from another repository&#34;
+</span><span style="color:#0086d2">    options :all =&gt; :boolean, :multiple =&gt; :boolean
+</span><span style="color:#0086d2">    option :append, :type =&gt; :boolean, :aliases =&gt; :a
+</span><span style="color:#0086d2">    def fetch(respository, *refspec)
+</span><span style="color:#0086d2">      # implement git fetch here
+</span><span style="color:#0086d2">    end
+</span><span style="color:#0086d2">
+</span><span style="color:#0086d2">    desc &#34;remote SUBCOMMAND ...ARGS&#34;, &#34;manage set of tracked repositories&#34;
+</span><span style="color:#0086d2">    # pay attention to this line
+</span><span style="color:#0086d2">    subcommand &#34;remote&#34;, Remote
+</span><span style="color:#0086d2">  end
+</span><span style="color:#0086d2">end</span></code></pre></div>
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

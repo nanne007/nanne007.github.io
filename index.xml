@@ -271,6 +271,18 @@ class Fibonacci { constructor() { this.a = 0; this.b = 1; } [Symbol.iterator]() 
     </item>
     
     <item>
+      <title>关于 Monad</title>
+      <link>/posts/about-monad/</link>
+      <pubDate>Wed, 24 Dec 2014 00:33:18 +0800</pubDate>
+      
+      <guid>/posts/about-monad/</guid>
+      <description>Monad 定义 一个monad包含三个东西： 1. 一个类型构造器M，它可以从类型a构造出类型M[a]。 2. 一个unit函数，将类型为a的值转换成类型M[a]，函数签名为： a =&amp;gt; M[a]。 3. 一个bind函数，通过函数a =&amp;gt; M[b]将一个M[a]转换成一个M[b]，函数签名：(M[a], a =&amp;gt; M[b]) =&amp;gt; M[b]。概念类似于flatMap。
+另一种构造方式 flatMap通常可以用map和flatten代替。 类似的概念，Monad中的bind函数可以用fmap和join定义。（fmap相当于map，join相当于flatten） - fmap，通过函数a =&amp;gt; b将一个M[a]转换成M[b]，函数签名：(M[a], a =&amp;gt; b) =&amp;gt; M[b]。 - join，将一个M[M[a]]转换成M[a]，函数签名：M[M[a]] =&amp;gt; M[a]。
+等价的概念：bind(m, f) = join(fmap(m, f))。
+Continuation Monad case class M[+A](in: (A =&amp;gt; Any) =&amp;gt; Any); def unit[A](x: A) = M { k: (A =&amp;gt; Any) =&amp;gt; k(x) } def bind[A, B](m: M[A], f: A =&amp;gt; M[B]): M[B] = M { k: (B =&amp;gt; Any) =&amp;gt; m.</description>
+    </item>
+    
+    <item>
       <title>Ruby 元编程基础</title>
       <link>/posts/meta-programming-in-ruby/</link>
       <pubDate>Thu, 16 Oct 2014 00:14:07 +0800</pubDate>
@@ -366,6 +378,72 @@ a = m2 - n2，b = 2mn，c = m2 + n2
 (define (factorial n) (if (= n 0) 1 ; NOT tail-recursive (* n (factorial (- n 1))))) 如何把它变成 CPS 形式的呢？
 首先给 factorial 加一个额外的参数 k， 这个 k 代表了当 factorial 调用结束后要执行的动作。
 ; postfix a &amp;amp; to represent the cps version of a function (define (factorial&amp;amp; n k) ???) 接下来的唯一“复杂”的地方就是 (* n (factorial (- n 1))) 了。 这个表达式中，先有 (- n 1) 调用，然后是 factorial，乘法是最后一步计算。 需要做的同上：给 factorial 调用加上一个 k 参数。</description>
+    </item>
+    
+    <item>
+      <title>质数生成器在 Ruby 标准库中的实现</title>
+      <link>/posts/prime-generator-in-ruby-std/</link>
+      <pubDate>Mon, 09 Dec 2013 00:19:12 +0800</pubDate>
+      
+      <guid>/posts/prime-generator-in-ruby-std/</guid>
+      <description>如果你在 Project Euler 上做过题，你一定碰见过很多和质数相关的题目。 1. 判断一个数是否是质数， 2. 第XX个质数， 3. 前XX个数中的所有质数， 4. 质因数分解，
+最近，遇到了 Euler&amp;rsquo;s Totient function, 和质因数分解有些关系，心血来潮看了下 Ruby prime gem 的代码。
+质因数分解 质因数分解的代码异常简练，使用的是最简单直接的试除法，借助了质数生成器。
+生成器 质因数分解默认的生成器是 Prime::Generator23：正如名字所暗含的一样，Generator23 生成了所有不被2和3整除的数，代码的实现非常灵巧。
+ 我也是使用这种方法实现素数判断的，但代码远远不如它精简。好的代码可以提高 Programmer 的觉悟。
+ 但，一个数不被 2 和 3 整除不代表它就是素数，Generator23 只是一个伪素数生成器。 它的父类是 PseudoPrimeGenerator，PseudoPrimeGenerator 包含 Enumerable，实现了 each 方法；同时，作为父类，又提供 succ、next、rewind 抽象方法（Ruby 中没有抽象方法，这里只是借助其概念）。
+除了 Generator23，PseudoPrimeGenerator 还有两个子类， - EratosthenesGenerator - TrialDivisionGenerator
+生成器 - EratosthenesGenerator compute_primes 是这个生成器的核心。 该实现在基本的 Sieve of Eratosthenes 算法上做了两点改进： - 偶数直接筛掉。 - 只计算到不大于 sqrt(n).floor 的那个质数。</description>
+    </item>
+    
+    <item>
+      <title>尾递归和延续传递</title>
+      <link>/posts/tailcall-and-cps/</link>
+      <pubDate>Sat, 23 Nov 2013 00:22:07 +0800</pubDate>
+      
+      <guid>/posts/tailcall-and-cps/</guid>
+      <description>本文源自于 Daniel P.Friedman 的一篇讲稿 - 编程语言研究在程序员教育中所扮演的角色 。
+ 上一周，我和几个大学朋友做了一次简单的 workshop，分享的是尾递归和延续传递。
+从递归说起 首先来看看一个递归形式的 sum 程序：
+function sum(n) { if (0 == n) { return 0; } else { return n + sum(n - 1); } }  等同的尾递归形式如下：
+function sum(n, acc) { if (0 == n) { return acc; } else { return sum(n - 1, acc + n); } }  由于 nodejs 没有尾递归优化，当 n 超过调用栈的最大值时， 上述两种形式的代码都会产生 RangeError: Maximum call stack size exceeded 的错误。</description>
+    </item>
+    
+    <item>
+      <title>Scala 基础笔记</title>
+      <link>/notes/scala-basics/</link>
+      <pubDate>Sat, 10 Aug 2013 00:25:23 +0800</pubDate>
+      
+      <guid>/notes/scala-basics/</guid>
+      <description>控制结构和函数  赋值动作本身是没有值的。  var a = 1 scala&amp;gt; val nn = (a+=1) nn: Unit = ()  scala 支持函数。只要函数不是递归的，就不需要指定返回类型。 异常中 throw 有特殊的类型 Nothing。  类、对象以及特质  下面代码中，_ 是什么意思？  class Person { var name: String = _ }  类型投影？ 在内嵌类中访问外部类？ 定义只读属性时,  val attr private var privateAttr + def attar = privateAttr   选择哪个？其他更好的方案？
+ 类的伴生对象，可以访问类的私有成员。 类和其伴生对象可以相互访问私有特性？ 单例对象和伴生对象的关系？ 扩展类  使用 extends 关键字扩展类。 可以将类、字段、方法声明为 final，以确保其不会被重写。注：java 中的 final 意思与 val 类似，表示不可变。  重写方法  使用 override 修饰符来重写一个 非抽象方法 （那抽象方法？）。 使用 super 关键字来调用超类的方法。  类型检查和转换  o.</description>
+    </item>
+    
+    <item>
+      <title>Loop and a half 问题</title>
+      <link>/notes/loop-and-a-half/</link>
+      <pubDate>Fri, 29 Mar 2013 00:31:12 +0800</pubDate>
+      
+      <guid>/notes/loop-and-a-half/</guid>
+      <description>大部分的循环形式可以总结如下：
+A: S; if B then goto Z fi; T; goto A; Z: // do other stuff  当 S 为空时，可以写成 while 循环：until B do T;； 当 T 为空时，可以写成 do-while 循环：repeat S; until B;。
+但是，当 S 和 T 都不为空时，无论是写成 while 还是 do-while 总会有多余的一部分在循环之外执行：
+S; until B do begin T; S; end  inversedT; repeat T; S; until B;  这就是所谓的 loop and a half 问题。（相信大家在编程过程中都有遇到过）
+诸如：repeat begin S; when B exit; T; end 中这样的 loop/break 控制语句被添加到现代编程语言中，以解决 消除 goto 所带来的不便。</description>
+    </item>
+    
+    <item>
+      <title>命令行构建工具 - Thor</title>
+      <link>/posts/thor-usage/</link>
+      <pubDate>Sat, 09 Mar 2013 00:17:18 +0800</pubDate>
+      
+      <guid>/posts/thor-usage/</guid>
+      <description>Thor 是一个用来构建强大命令行的工具包，诸如 Bundler、Rails、Vagrant 这样的项目都在使用它。
+基本使用 Thor 类会被封装成带有多个命令的 CLI，比如 git、bundler。 类的公有方法表征命令。
+class MyCLI &amp;lt; Thor desc &amp;#34;hello NAME&amp;#34;, &amp;#34;say hello to NAME&amp;#34; def hello(name) puts &amp;#34;Hello #{name}&amp;#34; end end 有了上面的类，然后调用 MyCLI.start(ARGV)，CLI 就可以执行了。
+接下来的例子，我会假设当前目录下有一个叫 my_cli 的 ruby 源文件，内容大致是这样的。
+require &amp;#34;thor&amp;#34; class MyCLI &amp;lt; Thor # contents of the Thor class end MyCLI.start(ARGV) 如果传递给 start 的参数列表是空的，Thor 会打印出 CLI 的帮助信息。 帮助信息会自动使用 CLI 的名称。
+$ ruby ./my_cli Commands: my_cli hello NAME # say hello to NAME my_cli help [COMMAND] # Describe available commands or one specific command 带参数执行 hello 命令，就会调用 Thor 类中相应的方法。</description>
     </item>
     
   </channel>
