@@ -112,6 +112,25 @@ Continuation Monad case class M[+A](in: (A =&amp;gt; Any) =&amp;gt; Any); def un
     </item>
     
     <item>
+      <title>为什么要学习不同的语言</title>
+      <link>/posts/make-contact-with-more-languages/</link>
+      <pubDate>Mon, 10 Nov 2014 21:07:33 +0800</pubDate>
+      
+      <guid>/posts/make-contact-with-more-languages/</guid>
+      <description>首先说明一点，在我的理解中，了解一门语言 应该是曾花时间认真学习过，并能对其特有的性质说出一二。
+按照这个定义，到目前为止，对于 c 、c++ 、 ruby 、 javascript 、 java/scala 、 racket 、 rust 我是了解的。其实我也看过 java 和 C#, 但只限于蜻蜓点水，所以这两门语言就排除在外。
+学习历程贯穿我整个大学生活，并延续至今，是自己作为一路上所写代码的缩影。
+c 是我接触到的第一种编程语言，于我有重要的启蒙作用，教会我走路：变量，函数，指针，调试，编译，IDE 等等。
+之后，接触到面向对象语言 C++ ，了解到更多的概念，对象，类，模块化，并意识到 C++ 纷杂的编程方法所带来的更多可能性。
+后来，机缘巧合遇到了 _ruby_，动态语言，元编程，第一次发现编程的世界是如此的广阔。后来在读 SICP 时，也有这种惊喜之感，像发现了藏宝图一样。
+认清元编程的本质之后，对对象/消息这套机制也有了比以往更加清晰的认识。没过多久，开始接触 _javascript_，发现了原型继承这种东西，弄清了 Object 和 Function 各自所处的位置。
+去年，在 Summingbird 项目上，接触到 _scala_，深入了解了类型推断以及hindley milner 算法，同时，第一次正式的去学习函数式编程范式。
+至于 racket 或者 _lisp_，说其对我产生的影响最大也不为过。之前在 Ruby 中已经意识到的类似 代码即数据 的概念，在学习 SICP 的过程中变得愈发清晰。
+最近的大半个月，在了解 Rust 语言，当看到 Ownership 和 Borrowing 时，我立即清晰的认识到当初觉得 C++ 复杂难学的原因，Rust 没有去刻意逃避内存管理，而是以 Ownership 的方式将其融入了语法之中。
+经历了这种种，我越发认识到学习编程语言对于思维锻炼的重要性：对已有知识的一个反邹。我无法确定先学习哪个是最合适的，但我相信不同的编程语言可以挖掘不同的发现问题的角度和解决问题的方式。</description>
+    </item>
+    
+    <item>
       <title>Ruby 元编程基础</title>
       <link>/posts/meta-programming-in-ruby/</link>
       <pubDate>Thu, 16 Oct 2014 00:14:07 +0800</pubDate>
