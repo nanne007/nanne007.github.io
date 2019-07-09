@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>accumulate 实现上的坑 | Give me five</title>
+    <meta name="DC.Title" content="accumulate 实现上的坑">
+  
+
+  
+    <meta name="DC.Date" content="2014/09/10">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="今天看 SICP 时，遇到了 accumulate 的实现。（类似的还有，Ruby中的 inject，Scala中的 fold）
+(define (accumulate op initial sequence) (if (null? sequence) initial (op (car sequence) (accumulate op initial (cdr sequence))))) 自我聪明写出了下面这样的代码：
+(define (accumulate op initial sequence) (if (null? sequence) initial (accumulate op (op (car sequence) initial) (cdr sequence)))) 做习题用到这个函数时，才察觉出和原文实现的差别。
+原文的实现，是从右到左的，而我的则相反。比如说，对于 (accumulate - 0 &#39;(5 4 3 2 1))，从右到左是这样的：
+(- 5 (- 4 (- 3 (- 2 (- 1 0))))) ; =&amp;gt; (5-(4-(3-(2-(1-0))))) 而从左到右则大不相同：
+(- (- (- (- (- 0 5) 4) 3) 2) 1) ; =&amp;gt; (0-5-4-3-2-1) 这也是为什么，从左到右时，initial 一般是 op 的第一个参数，而从右到左时，却是第二个。">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/you-should-lookout-accumulate/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>accumulate 实现上的坑</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2014/09/10 
+    
+
+    
+</header>
+
+<article>
+<p>今天看 SICP 时，遇到了 <code>accumulate</code> 的实现。（类似的还有，Ruby中的 <code>inject</code>，Scala中的 <code>fold</code>）</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">define</span> (accumulate op initial sequence)
+  (<span style="color:#fb660a;font-weight:bold">if</span> (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op initial (cdr sequence)))))</code></pre></div>
+<p>自我聪明写出了下面这样的代码：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(<span style="color:#fb660a;font-weight:bold">define</span> (accumulate op initial sequence)
+  (<span style="color:#fb660a;font-weight:bold">if</span> (null? sequence)
+      initial
+      (accumulate op (op (car sequence) initial) (cdr sequence))))</code></pre></div>
+<p>做习题用到这个函数时，才察觉出和原文实现的差别。</p>
+
+<p>原文的实现，是从右到左的，而我的则相反。比如说，对于 <code>(accumulate - 0 '(5 4 3 2 1))</code>，从右到左是这样的：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(- <span style="color:#0086f7;font-weight:bold">5</span> (- <span style="color:#0086f7;font-weight:bold">4</span> (- <span style="color:#0086f7;font-weight:bold">3</span> (- <span style="color:#0086f7;font-weight:bold">2</span> (- <span style="color:#0086f7;font-weight:bold">1</span> <span style="color:#0086f7;font-weight:bold">0</span>))))) <span style="color:#080;background-color:#0f140f;font-style:italic">; =&gt; (5-(4-(3-(2-(1-0)))))</span></code></pre></div>
+<p>而从左到右则大不相同：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">(- (- (- (- (- <span style="color:#0086f7;font-weight:bold">0</span> <span style="color:#0086f7;font-weight:bold">5</span>) <span style="color:#0086f7;font-weight:bold">4</span>) <span style="color:#0086f7;font-weight:bold">3</span>) <span style="color:#0086f7;font-weight:bold">2</span>) <span style="color:#0086f7;font-weight:bold">1</span>) <span style="color:#080;background-color:#0f140f;font-style:italic">; =&gt; (0-5-4-3-2-1)</span></code></pre></div>
+<p>这也是为什么，从左到右时，<code>initial</code> 一般是 <code>op</code> 的第一个参数，而从右到左时，却是第二个。</p>
+
+<p>想到这里的时候，脑子里突然冒出了 <a href="http://stackoverflow.com/questions/17408880/reduce-fold-or-scan-left-right">reduce-fold-or-scan-left-right - stackoverflow</a>，这是在了解 Scala 时碰到的。当时还以为自己懂了&hellip;</p>
+
+<p>要想保证从左到右和从右到左进行 <code>fold</code> 操作都得到一样的结果，需要满足下面这两个条件：</p>
+
+<ul>
+<li>op满足结合律，所谓的monoid。</li>
+</ul>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">  (= (op (op a b) c) (op a (op b c)))</code></pre></div>
+<ul>
+<li>初始值时，op要满足交换律。</li>
+</ul>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-racket" data-lang="racket">  (= (op <span style="color:#fb660a;font-weight:bold">init</span> a) (op a <span style="color:#fb660a;font-weight:bold">init</span>))</code></pre></div>
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

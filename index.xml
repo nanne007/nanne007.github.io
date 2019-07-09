@@ -340,6 +340,20 @@ for i:=1 step 1 until m do if A[i] = x then goto found fi; not found: i:= m + 1;
     </item>
     
     <item>
+      <title>accumulate 实现上的坑</title>
+      <link>/posts/you-should-lookout-accumulate/</link>
+      <pubDate>Wed, 10 Sep 2014 21:01:14 +0800</pubDate>
+      
+      <guid>/posts/you-should-lookout-accumulate/</guid>
+      <description>今天看 SICP 时，遇到了 accumulate 的实现。（类似的还有，Ruby中的 inject，Scala中的 fold）
+(define (accumulate op initial sequence) (if (null? sequence) initial (op (car sequence) (accumulate op initial (cdr sequence))))) 自我聪明写出了下面这样的代码：
+(define (accumulate op initial sequence) (if (null? sequence) initial (accumulate op (op (car sequence) initial) (cdr sequence)))) 做习题用到这个函数时，才察觉出和原文实现的差别。
+原文的实现，是从右到左的，而我的则相反。比如说，对于 (accumulate - 0 &#39;(5 4 3 2 1))，从右到左是这样的：
+(- 5 (- 4 (- 3 (- 2 (- 1 0))))) ; =&amp;gt; (5-(4-(3-(2-(1-0))))) 而从左到右则大不相同：
+(- (- (- (- (- 0 5) 4) 3) 2) 1) ; =&amp;gt; (0-5-4-3-2-1) 这也是为什么，从左到右时，initial 一般是 op 的第一个参数，而从右到左时，却是第二个。</description>
+    </item>
+    
+    <item>
       <title>勾股数与 Euclid&#39;s formula</title>
       <link>/posts/euclid-formula/</link>
       <pubDate>Thu, 10 Jul 2014 00:00:00 +0000</pubDate>
