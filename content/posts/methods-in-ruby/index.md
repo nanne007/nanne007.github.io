@@ -90,6 +90,7 @@ def self.generate_method(method_name, &block)
   remove_method method_name
   method
 end
+end
 ```
 
 Sinatra 利用这样的方式先保存 _before/after filter_ ，之后将 `filter`s 动态绑定到具体的请求上，在其上下文中执行。
