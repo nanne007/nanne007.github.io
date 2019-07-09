@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Git 实用技巧 | Give me five</title>
+    <meta name="DC.Title" content="Git 实用技巧">
+  
+
+  
+    <meta name="DC.Date" content="2013/09/09">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="记录 git 使用过程中积累的一些技巧">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/git-in-practice/">
+  
+
+  
+    <meta name="keywords" content="git,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Git 实用技巧</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2013/09/09 
+    
+
+    
+</header>
+
+<article>
+
+
+<h3 id="暂存部分修改">暂存部分修改</h3>
+
+<p>使用 git 的时候，偶尔会需要暂存修改的一部分。
+stack overflow上有一个相关的<a href="http://stackoverflow.com/questions/1085162/how-can-i-commit-only-part-of-a-file-in-git">问题</a>。</p>
+
+<p>这是community wiki的解答。</p>
+
+<blockquote>
+<p>You can do <code>git add -p filename.x</code>, and it&rsquo;ll ask you what you want to stage. You can then:</p>
+
+<p>hit <code>s</code> to split whatever change into smaller hunks. This only works if there is at least one unchanged line in the &ldquo;middle&rdquo; of the hunk, which is where the hunk will be split.</p>
+
+<p>then hit either:
+- <code>y</code> to stage that hunk, or
+- <code>n</code> to not stage that hunk, or
+- <code>e</code> to manually edit the hunk (useful when git can&rsquo;t split it automatically)
+- and <code>d</code> to exit or go to the next file.
+- use <code>?</code> to get the whole list of available options.</p>
+
+<p>If the file is not in the repository yet, do first <code>git add -N filename.x</code>. Afterwards you can go on with <code>git add -p filename.x</code>.</p>
+</blockquote>
+
+<p>主要是使用 <code>git add -p filename</code>命令。git manual 给出了详细解释：</p>
+
+<pre><code>       -p, --patch
+           Interactively choose hunks of patch between the index and the work
+           tree and add them to the index. This gives the user a chance to
+           review the difference before adding modified contents to the index.
+
+           This effectively runs add --interactive, but bypasses the initial
+           command menu and directly jumps to the patch subcommand. See
+           &quot;Interactive mode&quot; for details.
+</code></pre>
+
+<p>wiki最后还提到了 <code>git add -N filename.x</code>。<code>-N</code>的解释是：</p>
+
+<pre><code>       -N, --intent-to-add
+           Record only the fact that the path will be added later. An entry
+           for the path is placed in the index with no content. This is useful
+           for, among other things, showing the unstaged content of such files
+           with git diff and committing them with git commit -a.
+</code></pre>
+
+<h3 id="撤销上一次提交">撤销上一次提交</h3>
+
+<blockquote>
+<p><a href="http://stackoverflow.com/questions/927358/how-to-undo-the-last-git-commit">how to undo the last git commit</a></p>
+</blockquote>
+
+<p>使用命令 <code>git reset [|--hard|--soft] HEAD~1</code>, 注意参数的区别：<code>--hard</code>, <code>--soft</code>。</p>
+
+<h3 id="git-apply-p1">git apply -p1</h3>
+
+<p>今天尝试了下使用 git apply 命令，报错 <code>No such file or directory</code>。
+了解了一下，是 patch 里面的路径不对。
+因为patch 是用 <code>diff</code> 命令直接生成的，文件路径和 git 路径不一致。
+在 apply 的时候需要使用 <code>-p</code> 参数，移除文件路径前面的部分。</p>
+
+<pre><code>       -p&lt;n&gt;
+           Remove &lt;n&gt; leading path components (separated by slashes) from traditional diff paths. E.g., with -p2, a patch against a/dir/file will be applied
+           directly to file. The default is 1.
+</code></pre>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
