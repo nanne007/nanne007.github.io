@@ -463,6 +463,20 @@ function sum(n, acc) { if (0 == n) { return acc; } else { return sum(n - 1, acc 
     </item>
     
     <item>
+      <title>Ruby 中的方法</title>
+      <link>/posts/methods-in-ruby/</link>
+      <pubDate>Tue, 23 Apr 2013 21:12:11 +0800</pubDate>
+      
+      <guid>/posts/methods-in-ruby/</guid>
+      <description>对象化的方法（objectified method） 一直以来，关于对象方法，我的了解仅止步于使用 Object#methods、Class#instance_methods 这样的方式去认识对象和类。 而没有进一步去查看对象方法到底是什么，有什么，怎么用。
+其实在 Ruby 中，有具体的类来表示 对象方法。一个是 Method，一个是 UnboundMethod。
+Method 类 Method 实例实际上就是绑定在一个特定对象的 proc，只不过这个 proc 的实体由方法定义，所以叫做 对象化的方法。
+用 Object#method 方法可以得到这样的一个实例。
+class A def initialize(a) @a = a end def a(b) &amp;#39;#{@a} with #{b} in method A#a&amp;#39; end end meth = A.new(1).method(:a) #=&amp;gt; #&amp;lt;Method: A#a&amp;gt; 得到 Method 实例后，可以使用 Method#call 或者 Method#[] 来调用，效果和在对象上直接调用是一样的。
+meth.call(2) #=&amp;gt; &amp;#34;1 with 2 in method A#a&amp;#34; meth[2] #=&amp;gt; &amp;#34;1 with 2 in method A#a&amp;#34; A.</description>
+    </item>
+    
+    <item>
       <title>Loop and a half 问题</title>
       <link>/notes/loop-and-a-half/</link>
       <pubDate>Fri, 29 Mar 2013 00:31:12 +0800</pubDate>

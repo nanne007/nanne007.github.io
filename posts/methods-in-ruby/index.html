@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Ruby 中的方法 | Give me five</title>
+    <meta name="DC.Title" content="Ruby 中的方法">
+  
+
+  
+    <meta name="DC.Date" content="2013/04/23">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="近距离了解 Ruby 方法">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/methods-in-ruby/">
+  
+
+  
+    <meta name="keywords" content="ruby,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Ruby 中的方法</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2013/04/23 
+    
+
+    
+</header>
+
+<article>
+
+
+<h2 id="对象化的方法-objectified-method">对象化的方法（objectified method）</h2>
+
+<p>一直以来，关于对象方法，我的了解仅止步于使用 <code>Object#methods</code>、<code>Class#instance_methods</code> 这样的方式去认识对象和类。
+而没有进一步去查看对象方法到底是什么，有什么，怎么用。</p>
+
+<p>其实在 Ruby 中，有具体的类来表示 <strong>对象方法</strong>。一个是 <code>Method</code>，一个是 <code>UnboundMethod</code>。</p>
+
+<h2 id="method-类">Method 类</h2>
+
+<p><code>Method</code> 实例实际上就是绑定在一个特定对象的 proc，只不过这个 proc 的实体由方法定义，所以叫做 <strong>对象化的方法</strong>。</p>
+
+<p>用 <code>Object#method</code> 方法可以得到这样的一个实例。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">class</span> A
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">initialize</span>(a)
+    @a = a
+  <span style="color:#fb660a;font-weight:bold">end</span>
+
+  <span style="color:#fb660a;font-weight:bold">def</span> <span style="color:#ff0086;font-weight:bold">a</span>(b)
+    <span style="color:#0086d2">&#39;#{@a} with #{b} in method A#a&#39;</span>
+  <span style="color:#fb660a;font-weight:bold">end</span>
+<span style="color:#fb660a;font-weight:bold">end</span>
+
+meth = A.new(<span style="color:#0086f7;font-weight:bold">1</span>).method(<span style="color:#0086d2">:a</span>) <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; #&lt;Method: A#a&gt;</span></code></pre></div>
+<p>得到 <code>Method</code> 实例后，可以使用 <code>Method#call</code> 或者 <code>Method#[]</code> 来调用，效果和在对象上直接调用是一样的。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">meth.call(<span style="color:#0086f7;font-weight:bold">2</span>)   <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; &#34;1 with 2 in method A#a&#34;</span>
+meth[<span style="color:#0086f7;font-weight:bold">2</span>]       <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; &#34;1 with 2 in method A#a&#34;</span>
+A.new(<span style="color:#0086f7;font-weight:bold">1</span>).a(<span style="color:#0086f7;font-weight:bold">2</span>)  <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; &#34;1 with 2 in method A#a&#34;</span></code></pre></div>
+<p>除此之外，也可以
+- 用 <code>Method#name</code> 得到方法名
+- 用 <code>Method#receiver</code> 得到方法绑定到的对象
+- 用 <code>Method#owner</code> 得到方法所属的类或模块
+- 用<code>Method#to_proc</code> 将其转换成对应的 lambda</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">obj = A.new(<span style="color:#0086f7;font-weight:bold">1</span>) <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; #&lt;A:0x007f88d40fdac0&gt;</span>
+meth = obj.method(<span style="color:#0086d2">:a</span>) <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; #&lt;Method: A#a&gt;</span>
+
+meth.name <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; :a</span>
+meth.receiver <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; #&lt;A:0x007f88d40fdac0&gt;</span>
+meth.to_proc <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; #&lt;Proc:0x007f88d5024df0 (lambda)&gt;</span></code></pre></div>
+<p>最后，用 <code>unbind</code> 将 <code>Method</code> 实例从对象上解绑，得到 <code>UnboundMethod</code> 实例。</p>
+
+<h2 id="unboundmethod-类">UnboundMethod 类</h2>
+
+<p><code>UnboundMethod</code> 实例本质上是一个没有执行上下文的 proc，
+而且只有在重新绑定到所属类的某个对象，成为 <code>Method</code> 实例后，才能被调用。</p>
+
+<p>可以通过 (1)解绑 <code>Method</code> 实例，(2) 调用 <code>Module#instance_method</code> 这两种方式得到。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">unbound_meth = A.instance_method(<span style="color:#0086d2">:a</span>) <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; &lt;UnboundMethod: A#a&gt;</span>
+unbound_meth = meth.unbind <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; #&lt;UnboundMethod: A#a&gt;</span>
+
+new_obj = A.new(<span style="color:#0086f7;font-weight:bold">10</span>)
+
+new_obj.kind_of?(unbound_meth.owner) <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; true</span>
+
+<span style="color:#080;background-color:#0f140f;font-style:italic"># bind operation will fail, if last sentence return false</span>
+meth = unbound_meth.bind(new_obj)
+meth.call(<span style="color:#0086f7;font-weight:bold">2</span>) <span style="color:#080;background-color:#0f140f;font-style:italic">#=&gt; &#34;10 with 2 in method A#a&#34;</span></code></pre></div>
+<h2 id="怎么使用">怎么使用</h2>
+
+<p>Sinatra 中，有这样一个应用场景。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#fb660a;font-weight:bold">module</span> Base
+<span style="color:#fb660a;font-weight:bold">def</span> self.<span style="color:#ff0086;font-weight:bold">generate_method</span>(method_name, &amp;block)
+  define_method(method_name, &amp;block)
+  method = instance_method method_name
+  remove_method method_name
+  method
+<span style="color:#fb660a;font-weight:bold">end</span></code></pre></div>
+<p>Sinatra 利用这样的方式先保存 <em>before/after filter</em> ，之后将 <code>filter</code>s 动态绑定到具体的请求上，在其上下文中执行。</p>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
