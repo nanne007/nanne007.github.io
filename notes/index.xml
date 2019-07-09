@@ -183,6 +183,16 @@ Try = Struct.new(:ok, data_or_exception) class Try def pipe(&amp;amp;block) if !
     </item>
     
     <item>
+      <title>关于 Lambda Architecture</title>
+      <link>/notes/lambda-architecture/</link>
+      <pubDate>Fri, 04 Jul 2014 20:37:49 +0800</pubDate>
+      
+      <guid>/notes/lambda-architecture/</guid>
+      <description>Refer:
+ http://lambda-architecture.net http://nathanmarz.com/blog/how-to-beat-the-cap-theorem.html http://radar.oreilly.com/2014/07/questioning-the-lambda-architecture.html  Update1 Lambda architecture is ugly, and it&amp;rsquo;s already solved by Google dataflow model, See apache beam and dataflow paper.</description>
+    </item>
+    
+    <item>
       <title>Scala 基础笔记</title>
       <link>/notes/scala-basics/</link>
       <pubDate>Sat, 10 Aug 2013 00:25:23 +0800</pubDate>

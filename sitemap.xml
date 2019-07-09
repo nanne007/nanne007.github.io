@@ -148,6 +148,11 @@
   </url>
   
   <url>
+    <loc>/notes/lambda-architecture/</loc>
+    <lastmod>2014-07-04T20:37:49+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/posts/packrat-parsing-in-scala/</loc>
     <lastmod>2014-05-26T23:01:26+08:00</lastmod>
   </url>

@@ -356,6 +356,16 @@ a = m2 - n2，b = 2mn，c = m2 + n2
     </item>
     
     <item>
+      <title>关于 Lambda Architecture</title>
+      <link>/notes/lambda-architecture/</link>
+      <pubDate>Fri, 04 Jul 2014 20:37:49 +0800</pubDate>
+      
+      <guid>/notes/lambda-architecture/</guid>
+      <description>Refer:
+ http://lambda-architecture.net http://nathanmarz.com/blog/how-to-beat-the-cap-theorem.html http://radar.oreilly.com/2014/07/questioning-the-lambda-architecture.html  Update1 Lambda architecture is ugly, and it&amp;rsquo;s already solved by Google dataflow model, See apache beam and dataflow paper.</description>
+    </item>
+    
+    <item>
       <title>Packrat Parsing in Scala</title>
       <link>/posts/packrat-parsing-in-scala/</link>
       <pubDate>Mon, 26 May 2014 23:01:26 +0800</pubDate>
