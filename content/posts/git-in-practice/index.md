@@ -6,6 +6,17 @@ tags:
 - git
 ---
 
+
+### 使用 git 比较非 git 项目的文件 ###
+
+
+`git diff --color-word --no-index file1 file2`
+
+主要是加 `--no-index` 参数。
+
+超级方便，不需要再借助其他命令了。
+
+
 ### 暂存部分修改 ###
 
 使用 git 的时候，偶尔会需要暂存修改的一部分。
