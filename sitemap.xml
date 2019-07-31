@@ -3,17 +3,22 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/notes/</loc>
-    <lastmod>2019-03-14T00:00:00+00:00</lastmod>
+    <loc>/notes/libra/</loc>
+    <lastmod>2019-07-31T23:43:04+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/notes/memory_order/</loc>
-    <lastmod>2019-03-14T00:00:00+00:00</lastmod>
+    <loc>/notes/</loc>
+    <lastmod>2019-07-31T23:43:04+08:00</lastmod>
   </url>
   
   <url>
     <loc>/</loc>
+    <lastmod>2019-07-31T23:43:04+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/notes/memory_order/</loc>
     <lastmod>2019-03-14T00:00:00+00:00</lastmod>
   </url>
   

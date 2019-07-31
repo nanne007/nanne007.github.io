@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Libra 源码 - Storage | Give me five</title>
+    <meta name="DC.Title" content="Libra 源码 - Storage">
+  
+
+  
+    <meta name="DC.Date" content="2019/07/31">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="storage 本身是一个 grpc 服务。
+接口 module: storage/storage_service
+提供的 grpc 接口：
+service Storage { // Write APIs.  // Persist transactions. Called by Execution when either syncing nodes or  // committing blocks during normal operation.  rpc SaveTransactions(SaveTransactionsRequest) returns (SaveTransactionsResponse); // Read APIs.  // Used to get a piece of data and return the proof of it. If the client  // knows and trusts a ledger info at version v, it should pass v in as the  // client_known_version and we will return the latest ledger info together  // with the proof that it derives from v.">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/libra/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Libra 源码 - Storage</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2019/07/31 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>storage 本身是一个 grpc 服务。</p>
+
+<h3 id="接口">接口</h3>
+
+<p>module: storage/storage_service</p>
+
+<p>提供的 grpc 接口：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-protobuf" data-lang="protobuf"><span style="color:#fb660a;font-weight:bold">service</span> Storage {
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Write APIs.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Persist transactions. Called by Execution when either syncing nodes or
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// committing blocks during normal operation.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#fb660a;font-weight:bold">rpc</span> SaveTransactions(SaveTransactionsRequest)
+    <span style="color:#fb660a;font-weight:bold">returns</span> (SaveTransactionsResponse);
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Read APIs.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Used to get a piece of data and return the proof of it. If the client
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// knows and trusts a ledger info at version v, it should pass v in as the
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// client_known_version and we will return the latest ledger info together
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// with the proof that it derives from v.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#fb660a;font-weight:bold">rpc</span> UpdateToLatestLedger(
+    types.UpdateToLatestLedgerRequest)
+    <span style="color:#fb660a;font-weight:bold">returns</span> (types.UpdateToLatestLedgerResponse);
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// When we receive a request from a peer validator asking a list of
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// transactions for state synchronization, this API can be used to serve the
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// request. Note that the peer should specify a ledger version and all proofs
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#080;background-color:#0f140f;font-style:italic">// in the response will be relative to this given ledger version.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#fb660a;font-weight:bold">rpc</span> GetTransactions(GetTransactionsRequest) <span style="color:#fb660a;font-weight:bold">returns</span> (GetTransactionsResponse);
+
+    <span style="color:#fb660a;font-weight:bold">rpc</span> GetAccountStateWithProofByStateRoot(
+    GetAccountStateWithProofByStateRootRequest)
+    <span style="color:#fb660a;font-weight:bold">returns</span> (GetAccountStateWithProofByStateRootResponse);
+
+    <span style="color:#080;background-color:#0f140f;font-style:italic">// Returns information needed for Executor to start up.
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span>    <span style="color:#fb660a;font-weight:bold">rpc</span> GetExecutorStartupInfo(GetExecutorStartupInfoRequest)
+    <span style="color:#fb660a;font-weight:bold">returns</span> (GetExecutorStartupInfoResponse);
+}</code></pre></div>
+<p>具体实现在 <code>storage/storage_service/src/lib.rs</code> 中的 StorageService 类。实现上也是 delegate 到 libradb 对应的方法。</p>
+
+<p>中间对 libradb 做了一层 wrapper，是为了保证 grpc server 关闭之前，先 close 掉 db。</p>
+
+<blockquote>
+<p>See these links for more details.</p>
+
+<p><a href="https://github.com/pingcap/grpc-rs/issues/227">https://github.com/pingcap/grpc-rs/issues/227</a></p>
+
+<p><a href="https://github.com/facebook/rocksdb/issues/649">https://github.com/facebook/rocksdb/issues/649</a></p>
+</blockquote>
+
+<h3 id="libradb">LibraDB</h3>
+
+<p>LibraDB 其实比较简单，由两部分组成：</p>
+
+<ul>
+<li>SchemaDB：对 RocksDB 实例做了一层 schema 封装。让调用者可以直接 insert/query 一个 schema 对象，它处理对象的序列化和反序列化操作。代码在 <code>storage/schemadb</code> 中。
+定义 schema 时，libra 提供了 <code>define_schema</code> 的 rust macro，主要用来关联 rocksdb 的 cf name，以及 key/value 的 codec。
+主要的schema 定义在 <code>storage/libradb/schema</code> 里。</li>
+<li>基于 SchemaDB 封装的一些操作组件：不用组件负责操作不同域的对象数据。
+
+<ul>
+<li>LedgerStore</li>
+<li>TransactionStore</li>
+<li>StateStore</li>
+<li>EventStore</li>
+<li>SystemStore</li>
+</ul></li>
+</ul>
+
+<h3 id="data-structures">Data Structures</h3>
+
+<p>accumulator:</p>
+
+<pre><code>//! Example:
+//! Logical view of a Merkle Accumulator with 5 leaves:
+//! ```text
+//!            Non-fzn
+//!           /       \
+//!          /         \
+//!         /           \
+//!       Fzn2         Non-fzn
+//!      /   \           /   \
+//!     /     \         /     \
+//!    Fzn1    Fzn3  Non-fzn  [Placeholder]
+//!   /  \    /  \    /    \
+//!  L0  L1  L2  L3 L4   [Placeholder]
+//! ```
+</code></pre>
+
+<p>根据 hashvalue 列表构造的一个二叉树。
+当有新的 hashalue append 到列表中时，可以动态的更新二叉树中的节点，得到 root hash。</p>
+
+<h3 id="what-s-next">What&rsquo;s Next</h3>
+
+<ul class="task-list">
+<li><label><input type="checkbox" disabled class="task-list-item"> sparse_merkle</label></li>
+<li><label><input type="checkbox" disabled class="task-list-item"> state_view</label></li>
+<li><label><input type="checkbox" disabled class="task-list-item"> 重要的 schema 分析</label></li>
+</ul>
+
+</article>
+</main>
+
+    <footer> 
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Jul 07 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
