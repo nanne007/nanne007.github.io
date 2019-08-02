@@ -530,5 +530,16 @@ require &amp;#34;thor&amp;#34; class MyCLI &amp;lt; Thor # contents of the Thor 
 $ ruby ./my_cli Commands: my_cli hello NAME # say hello to NAME my_cli help [COMMAND] # Describe available commands or one specific command 带参数执行 hello 命令，就会调用 Thor 类中相应的方法。</description>
     </item>
     
+    <item>
+      <title></title>
+      <link>/notes/about_libra/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/about_libra/</guid>
+      <description>build install deps:
+brew install cmake protobuf go  Chain Move Language concept: - address: 256 bit bytes. - resource: instance of resource type. - module: contain resouce type defs and procedure defs.
+Bytecode verifier  control-flow graph construction. stack balance checking. type checking. Kind checking: based on rules about resource types.  resource cannot be duplicated. resource cannot be destroyed. resource must be used.  Reference checking. (will be another paper on this) Linking: check struct types and procedures.</description>
+    </item>
+    
   </channel>
 </rss>
