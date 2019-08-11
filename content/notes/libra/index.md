@@ -1,8 +1,10 @@
 ---
-title: "Libra 源码 - Storage"
+title: "Libra 源码"
 date: 2019-07-31T23:43:04+08:00
 draft: false
 ---
+
+## Storage ##
 
 storage 本身是一个 grpc 服务。
 
@@ -105,3 +107,72 @@ accumulator:
 - [ ] sparse_merkle
 - [ ] state_view
 - [ ] 重要的 schema 分析
+
+
+## AdmissionControl ##
+
+AC 是libra 对外提供的准入服务。目前有两个接口：
+
+```
+// -----------------------------------------------------------------------------
+// ---------------- Service definition
+// -----------------------------------------------------------------------------
+service AdmissionControl {
+  // Public API to submit transaction to a validator.
+  rpc SubmitTransaction(SubmitTransactionRequest)
+      returns (SubmitTransactionResponse) {}
+
+  // This API is used to update the client to the latest ledger version and
+  // optionally also request 1..n other pieces of data.  This allows for batch
+  // queries.  All queries return proofs that a client should check to validate
+  // the data. Note that if a client only wishes to update to the latest
+  // LedgerInfo and receive the proof of this latest version, they can simply
+  // omit the requested_items (or pass an empty list)
+  rpc UpdateToLatestLedger(
+      types.UpdateToLatestLedgerRequest)
+      returns (types.UpdateToLatestLedgerResponse) {}
+}
+
+```
+
+SubmitTransaction 用来提交 tx 的接口。
+tx 提过来之后，会先用 **vm_validator** 做一遍验证，vm_validator 依赖 storage 来查询链上的数据。
+验证通过后，把 tx 加入到 mempool 中。当然，在这之前，会先校验 mempool 当前的健康状况，看看是不是过载了。过载就直接拒绝请求。
+
+
+UpdateToLatestLedger 是 client 用来数据的接口。接口实现直接调用 storage 的 `update_to_latest_ledger`方法。
+
+
+## Mempool ##
+
+mempool 负责维护 tx 的状态，及时清理过期的 tx，管控同时在进行的 tx，维护 tx 的 顺序。
+
+对外提供以下四个接口：
+
+``` protobuf
+// ---------------- Mempool Service Definition
+// -----------------------------------------------------------------------------
+service Mempool {
+  // Adds a new transaction to the mempool with validation against existing
+  // transactions in the mempool.  Note that this function performs additional
+  // validation that AC is unable to perform. (because AC knows only about a
+  // single transaction, but mempool potentially knows about multiple pending
+  // transactions)
+  rpc AddTransactionWithValidation(AddTransactionWithValidationRequest)
+      returns (AddTransactionWithValidationResponse) {}
+
+  // Fetch ordered block of transactions
+  rpc GetBlock(GetBlockRequest) returns (GetBlockResponse) {}
+
+  // Remove committed transactions from Mempool
+  rpc CommitTransactions(CommitTransactionsRequest)
+      returns (CommitTransactionsResponse) {}
+
+  // Check the health of mempool
+  rpc HealthCheck(HealthCheckRequest)
+      returns (HealthCheckResponse) {}
+}
+
+```
+
+mempool 没有和 storage 打交道，纯内存操作。里面需要注意的是 同一个sender 的tx 会按照 `sequence_number` 来排序，保证 seq 小的先执行。
