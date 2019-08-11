@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Substrate 第一印象 | Give me five</title>
+    <meta name="DC.Title" content="Substrate 第一印象">
+  
+
+  
+    <meta name="DC.Date" content="2019/08/10">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="很早之前就听过 substrate 的大名，polkadot 也是基于 substrate 框架开发的，subsrate 想做一个通用的 blockchain 开发框架。 之前我也有过类似的想法。这么多的公链，讲道理 network，storage，consensus 等大部分的模块都是可以抽象出来，提供统一的接口供开发者做具体的实现。 这是题外话，说到 substrate，第一印象就是，WTF，怎么怎么多 macro？WTF，我的代码还要写在 macro 里面？WTF，这 tm 还是 Rust 吗？
+看完下面这种代码。
+decl_module!{pubstruct Module&amp;lt;T: Trait&amp;gt;forenum Callwhereorigin: T::Origin{/// The minimum period between blocks. Beware that this is different to the *expected* period /// that the block production apparatus provides. Your chosen consensus system will generally /// work with this to determine a sensible block time. e.g. For Aura, it will be double this /// period on default settings.">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/first_impression_on_substrate/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Substrate 第一印象</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2019/08/10 
+    
+
+    
+</header>
+
+<article>
+<p>很早之前就听过 substrate 的大名，polkadot 也是基于 substrate 框架开发的，subsrate 想做一个通用的 blockchain 开发框架。
+之前我也有过类似的想法。这么多的公链，讲道理 network，storage，consensus 等大部分的模块都是可以抽象出来，提供统一的接口供开发者做具体的实现。
+这是题外话，说到 substrate，第一印象就是，WTF，怎么怎么多 macro？WTF，我的代码还要写在 macro 里面？WTF，这 tm 还是 Rust 吗？</p>
+
+<p>看完下面这种代码。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust">decl_module!<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">	</span><span style="color:#fb660a;font-weight:bold">pub</span><span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">struct</span> Module&lt;T: Trait&gt;<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">for</span><span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">enum</span> Call<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888"> </span>origin: T::Origin<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">		</span><span style="color:#0086d2">/// The minimum period between blocks. Beware that this is different to the *expected* period
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// that the block production apparatus provides. Your chosen consensus system will generally
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// work with this to determine a sensible block time. e.g. For Aura, it will be double this
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// period on default settings.
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#fb660a;font-weight:bold">const</span><span style="color:#888"> </span>MinimumPeriod: T::Moment<span style="color:#888"> </span>=<span style="color:#888"> </span>T::MinimumPeriod::get();<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">		</span><span style="color:#0086d2">/// Set the current time.
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">///
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// This call should be invoked exactly once per block. It will panic at the finalization
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// phase, if this call hasn&#39;t been invoked by that time.
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">///
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// The timestamp should be greater than the previous one by the amount specified by
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// `MinimumPeriod`.
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">///
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#0086d2">/// The dispatch origin for this call must be `Inherent`.
+</span><span style="color:#0086d2"></span><span style="color:#888">		</span><span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">#[weight = SimpleDispatchInfo::FixedOperational(10_000)]</span><span style="color:#888">
+</span><span style="color:#888">		</span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">set</span>(origin,<span style="color:#888"> </span><span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">#[compact]</span><span style="color:#888"> </span>now: T::Moment)<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">			</span>ensure_none(origin)?;<span style="color:#888">
+</span><span style="color:#888">			</span>assert!(!&lt;Self<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">as</span><span style="color:#888"> </span>Store&gt;::DidUpdate::exists(),<span style="color:#888"> </span><span style="color:#0086d2">&#34;Timestamp must be updated only once in the block&#34;</span>);<span style="color:#888">
+</span><span style="color:#888">			</span>assert!(<span style="color:#888">
+</span><span style="color:#888">				</span>Self::now().is_zero()<span style="color:#888"> </span>||<span style="color:#888"> </span>now<span style="color:#888"> </span>&gt;=<span style="color:#888"> </span>Self::now()<span style="color:#888"> </span>+<span style="color:#888"> </span>T::MinimumPeriod::get(),<span style="color:#888">
+</span><span style="color:#888">				</span><span style="color:#0086d2">&#34;Timestamp must increment by at least &lt;MinimumPeriod&gt; between sequential blocks&#34;</span><span style="color:#888">
+</span><span style="color:#888">			</span>);<span style="color:#888">
+</span><span style="color:#888">			</span>&lt;Self<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">as</span><span style="color:#888"> </span>Store&gt;::Now::put(now.clone());<span style="color:#888">
+</span><span style="color:#888">			</span>&lt;Self<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">as</span><span style="color:#888"> </span>Store&gt;::DidUpdate::put(<span style="color:#fb660a;font-weight:bold">true</span>);<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">			</span>&lt;T::OnTimestampSet<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">as</span><span style="color:#888"> </span>OnTimestampSet&lt;_&gt;&gt;::on_timestamp_set(now);<span style="color:#888">
+</span><span style="color:#888">		</span>}<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">		</span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">on_finalize</span>()<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">			</span>assert!(&lt;Self<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">as</span><span style="color:#888"> </span>Store&gt;::DidUpdate::take(),<span style="color:#888"> </span><span style="color:#0086d2">&#34;Timestamp must be updated once in the block&#34;</span>);<span style="color:#888">
+</span><span style="color:#888">		</span>}<span style="color:#888">
+</span><span style="color:#888">	</span>}<span style="color:#888">
+</span><span style="color:#888"></span>}<span style="color:#888">
+</span></code></pre></div>
+<p>以及 <code>decl_module!</code> 的实现： <a href="https://github.com/paritytech/substrate/blob/dcbe1be4ebb88c6931c79ca93e36c4374bdde23f/srml/support/src/dispatch.rs#L215">https://github.com/paritytech/substrate/blob/dcbe1be4ebb88c6931c79ca93e36c4374bdde23f/srml/support/src/dispatch.rs#L215</a></p>
+
+<p>已经欲哭无泪了。</p>
+
+<p>容我再看两天。</p>
+
+</article>
+</main>
+
+    <footer>
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Aug 11 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

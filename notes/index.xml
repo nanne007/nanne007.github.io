@@ -6,18 +6,29 @@
     <description>Recent content in Notes on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 31 Jul 2019 23:43:04 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 10 Aug 2019 18:08:50 +0800</lastBuildDate>
     
 	<atom:link href="/notes/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Libra 源码 - Storage</title>
+      <title>Substrate 第一印象</title>
+      <link>/notes/first_impression_on_substrate/</link>
+      <pubDate>Sat, 10 Aug 2019 18:08:50 +0800</pubDate>
+      
+      <guid>/notes/first_impression_on_substrate/</guid>
+      <description>很早之前就听过 substrate 的大名，polkadot 也是基于 substrate 框架开发的，subsrate 想做一个通用的 blockchain 开发框架。 之前我也有过类似的想法。这么多的公链，讲道理 network，storage，consensus 等大部分的模块都是可以抽象出来，提供统一的接口供开发者做具体的实现。 这是题外话，说到 substrate，第一印象就是，WTF，怎么怎么多 macro？WTF，我的代码还要写在 macro 里面？WTF，这 tm 还是 Rust 吗？
+看完下面这种代码。
+decl_module!{pubstruct Module&amp;lt;T: Trait&amp;gt;forenum Callwhereorigin: T::Origin{/// The minimum period between blocks. Beware that this is different to the *expected* period /// that the block production apparatus provides. Your chosen consensus system will generally /// work with this to determine a sensible block time. e.g. For Aura, it will be double this /// period on default settings.</description>
+    </item>
+    
+    <item>
+      <title>Libra 源码</title>
       <link>/notes/libra/</link>
       <pubDate>Wed, 31 Jul 2019 23:43:04 +0800</pubDate>
       
       <guid>/notes/libra/</guid>
-      <description>storage 本身是一个 grpc 服务。
+      <description>Storage storage 本身是一个 grpc 服务。
 接口 module: storage/storage_service
 提供的 grpc 接口：
 service Storage { // Write APIs.  // Persist transactions. Called by Execution when either syncing nodes or  // committing blocks during normal operation.  rpc SaveTransactions(SaveTransactionsRequest) returns (SaveTransactionsResponse); // Read APIs.  // Used to get a piece of data and return the proof of it. If the client  // knows and trusts a ledger info at version v, it should pass v in as the  // client_known_version and we will return the latest ledger info together  // with the proof that it derives from v.</description>
