@@ -1,7 +1,6 @@
 ---
 title: "重读 DDIA isolation 部分"
 date: 2019-08-23T16:57:58+08:00
-draft: true
 ---
 
 事务隔离要解决以下几类问题：
