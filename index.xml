@@ -6,10 +6,28 @@
     <description>Recent content in 主页 on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 10 Aug 2019 18:08:50 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 23 Aug 2019 16:57:58 +0800</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>重读 DDIA isolation 部分</title>
+      <link>/posts/on-ddia-isolation/</link>
+      <pubDate>Fri, 23 Aug 2019 16:57:58 +0800</pubDate>
+      
+      <guid>/posts/on-ddia-isolation/</guid>
+      <description>事务隔离要解决以下几类问题：
+-读： dirty read, read skew -写： dirty write, lost update, write skew
+dirty read (脏读) 在一个 tx 中，读到其他 tx 还没有 commit 的 writes。
+RC, SI, RR, Serializable
+dirty write (脏写) 在一个 tx 中，write 覆盖了其他 tx 中尚未 commit 的 writes。
+(加 row-level 的lock，commit/rollback 时释放)
+RC, SI, RR, Serializable
+read skew(nonrepeatable read) (读偏斜) 一个 tx 中，连续读两次相同条件的数据，读到的数据不一样。（因为可能被其他 tx commitle 新的 write 数据）
+SI, RR, Seriablizable
+lost update (写丢失) 一个 tx 中，读了一个数据，然后在修改（比如，read count 为10，然后update count = 10 + 1），最后 commit。如果是多个 tx 同时进行这样的操作，最后 count 值可能不正确。</description>
+    </item>
     
     <item>
       <title>Substrate 第一印象</title>

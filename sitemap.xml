@@ -3,17 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>/posts/</loc>
+    <lastmod>2019-08-23T16:57:58+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/</loc>
+    <lastmod>2019-08-23T16:57:58+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/on-ddia-isolation/</loc>
+    <lastmod>2019-08-23T16:57:58+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/notes/</loc>
     <lastmod>2019-08-10T18:08:50+08:00</lastmod>
   </url>
   
   <url>
     <loc>/notes/first_impression_on_substrate/</loc>
-    <lastmod>2019-08-10T18:08:50+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/</loc>
     <lastmod>2019-08-10T18:08:50+08:00</lastmod>
   </url>
   
@@ -25,11 +35,6 @@
   <url>
     <loc>/notes/memory_order/</loc>
     <lastmod>2019-03-14T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/posts/</loc>
-    <lastmod>2018-12-16T21:33:22+00:00</lastmod>
   </url>
   
   <url>
