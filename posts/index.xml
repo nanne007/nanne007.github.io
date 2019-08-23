@@ -18,8 +18,7 @@
       
       <guid>/posts/on-ddia-isolation/</guid>
       <description>事务隔离要解决以下几类问题：
--读： dirty read, read skew -写： dirty write, lost update, write skew
-dirty read (脏读) 在一个 tx 中，读到其他 tx 还没有 commit 的 writes。
+ 读： dirty read, read skew 写： dirty write, lost update, write skew  dirty read (脏读) 在一个 tx 中，读到其他 tx 还没有 commit 的 writes。
 RC, SI, RR, Serializable
 dirty write (脏写) 在一个 tx 中，write 覆盖了其他 tx 中尚未 commit 的 writes。
 (加 row-level 的lock，commit/rollback 时释放)
