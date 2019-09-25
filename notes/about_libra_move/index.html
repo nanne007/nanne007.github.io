@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Libra Move 采坑记 | Give me five</title>
+    <meta name="DC.Title" content="Libra Move 采坑记">
+  
+
+  
+    <meta name="DC.Date" content="2019/09/25">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="最近开始上手写 move 智能合约，拿石头剪刀布当作业。这里记录下遇到的问题。
+首先是 move ir 的编译问题。
+libra client 里面有 dev 命令，可以帮助 编译，发布和执行 move 的代码。 但是这个流程，手动操作起来还是不够方便，尤其是在刚刚上手写的时候，经常会遇到各种各样的问题。 libra 测试代码中提供了一个简单的 dsl，来编译执行 move 的代码，具体是在 language/functional_tests 中。
+另外就是 libra 的小坑了：
+我在 functional test 中写好 module 和 script 后，正常流程的测试也搞定了， 然后放到 libra dev 环境中跑， 用 dev execute 执行， tx commit 后，账户的数据却没有发生变化，也不知道问题出在哪里。
+后来看了下源码，发现 libra 没有把 tx 执行后的详细结果存下来（只存了一个概要结果，但是概要结果中没有 tx 执行的结果 code）。 libra 源码中加了一行日志，打印 tx 的执行结果，然后，再重新执行合约，日志中报错 OUT_OF_GAS。 dev 命令中没有显式指定 gas 费，那应该就是 client 中写死了一个默认值。 查看源码，发现是 const MAX_GAS_AMOUNT: u64 = 140_000; 这么多。 我用 functional_tests 执行了一遍合约，得到的结果，gas 费是 170_0000 还多，确实超了这个默认值。 最后没办法，把代码中默认的 gas 费往上加了加，合约执行成功。">
+  
+
+  
+    <meta name="DC.Identifier" content="/notes/about_libra_move/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Libra Move 采坑记</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2019/09/25 
+    
+
+    
+</header>
+
+<article>
+<p>最近开始上手写 move 智能合约，拿石头剪刀布当作业。这里记录下遇到的问题。</p>
+
+<p>首先是 move ir 的编译问题。</p>
+
+<p>libra client 里面有 dev 命令，可以帮助 编译，发布和执行 move 的代码。
+但是这个流程，手动操作起来还是不够方便，尤其是在刚刚上手写的时候，经常会遇到各种各样的问题。
+libra 测试代码中提供了一个简单的 dsl，来编译执行 move 的代码，具体是在 language/functional_tests 中。</p>
+
+<p>另外就是 libra 的小坑了：</p>
+
+<p>我在 functional test 中写好 module 和 script 后，正常流程的测试也搞定了，
+然后放到 libra dev 环境中跑，
+用 <code>dev execute</code> 执行， tx commit 后，账户的数据却没有发生变化，也不知道问题出在哪里。</p>
+
+<p>后来看了下源码，发现 libra 没有把 tx 执行后的详细结果存下来（只存了一个概要结果，但是概要结果中没有 tx 执行的结果 code）。
+libra 源码中加了一行日志，打印 tx 的执行结果，然后，再重新执行合约，日志中报错 OUT_OF_GAS。
+dev 命令中没有显式指定 gas 费，那应该就是 client 中写死了一个默认值。
+查看源码，发现是 <code>const MAX_GAS_AMOUNT: u64 = 140_000;</code> 这么多。
+我用 <code>functional_tests</code> 执行了一遍合约，得到的结果，gas 费是 <em>170_0000</em> 还多，确实超了这个默认值。
+最后没办法，把代码中默认的 gas 费往上加了加，合约执行成功。</p>
+
+<p>如果你想本地玩玩，可以试试我的 <a href="https://github.com/lerencao/RockScissorsPaper.mvir.git">lerencao/RockScissorsPaper.mvir</a></p>
+
+</article>
+</main>
+
+    <footer>
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Sep 25 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
