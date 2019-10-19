@@ -6,10 +6,24 @@
     <description>Recent content in 主页 on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 25 Sep 2019 20:43:04 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 18 Oct 2019 22:59:26 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>我从 Libra 学到了什么</title>
+      <link>/posts/what-i-learned-from-libra/</link>
+      <pubDate>Fri, 18 Oct 2019 22:59:26 +0000</pubDate>
+      
+      <guid>/posts/what-i-learned-from-libra/</guid>
+      <description>前言 本文会介绍我在最近一个月里面，对 libra 代码的摸索过程，从中学到了的 Rust 编程经验， 以及 Libra 现在还缺乏的功能，blockchain 开发者能够在 Libra 上做些什么。
+摸索 Libra 代码 推荐的模块走读顺序：admission_control =&amp;gt; mempool =&amp;gt; executor =&amp;gt; vm =&amp;gt; network =&amp;gt; storage =&amp;gt; consensus 。
+具体每个模块做什么，这里不展开讲，可以直接参考 Libra 官网。
+actor model Libra 采用 actor model 编程方式，映射到 Rust 中，actor 是一些跑在 tokio executor 上的 future tasks，
+actors 之间利用 rust channels 来传递自定义的 message 来沟通，主要有两种使用方式：
+ rpc: actor 在发出去的消息中附带一个 oneshot_sender，然后 wait 对应的 oneshot_receiver，接收消息的 actor 处理完请求后，把响应从 oneshot_sender 发送出去即可。 direct_send: actor 直接发送消息出去，系统不能确保接收者一定能收到。（假如 channels 满了，后来的消息可能会丢掉，取决于发送端的调用行为）。  rpc 和 _directsend 分别对应 erlang otp 中的 :call 操作和 :cast 操作。只不过 Rust 里 actor 的执行调度是 tokio 负责的。（tokio 调度器最近被重写了，性能大幅度提升，当然也是借鉴了现有的 goroutine 调度器的实现优化，比如 Golang, Java, Erlang，具体可参考 tokio scheduler got 10x improvements。</description>
+    </item>
     
     <item>
       <title>Libra Move 采坑记</title>
