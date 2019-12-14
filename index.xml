@@ -6,10 +6,23 @@
     <description>Recent content in 主页 on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 18 Oct 2019 22:59:26 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 12 Dec 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Filecoin 基本原理解读</title>
+      <link>/posts/filecoin/</link>
+      <pubDate>Thu, 12 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/filecoin/</guid>
+      <description>就在几天前，Protocol Labs 启动了 Filecoin 测试网，预计2020年一季度上线主网。新闻一出来，当年这个红极一时的明星项目又引起圈内一阵反响。大家所熟知的 IPFS 也是由 Protocol Labs 主导开发，该协议已经稳定运行几年了。IPFS 是一个点对点的分布式文件系统，但是光有 IPFS 是不够的，缺少必要的激励机制，整个系统无法形成有效的闭环，构建在 IPFS 之上的 Filecoin 就是为了解决这一问题。它提供了一个供需市场，存储提供者和存储使用方可以通过竞价的模式去达成交易，最终，通过市场来调节存储的成本，使用方能够根据价格选择速度、冗余程度和成本。在这篇文章中，我们聊聊 Filecoin 是怎么做的。
+基本构造 在介绍具体的交互之前，先介绍 Filecoin 的几个关键概念。
+参与方 参与 Filecoin 协议的有客户端(Client)，存储矿工（Storage Miner），检索矿工（Retrieval Miner）。
+ 客户端需要 1. 付钱给存储旷工来存储自己的数据，2. 付钱给检索矿工来获取数据。 存储矿工向网络提供数据存储，保存来自客户端的数据，并不断的向链证明自己确实保存了客户的数据。 检索矿工向客户端提供数据获取的服务。  存储旷工和检索矿工组成了 Filecoin 的网络，并不断生成账本，构建 Filecoin 区块链。
+数据结构  Pieces：用户的数据可能会被分成多个 pieces，并且不同的 pieces 可能由不同的存储矿工保存。 Sectors：sector 本意是扇区，这里指代的是存储矿工节点上的一部分存储空间。存储矿工需要先向链声明自己的 sectors，然后才可以对外提供服务，将客户端的 pieces 存储在 sectors 中。 Pledge：存储矿工在向链声明自己的 sectors，还需要抵押一部分的资金，pledge 用来保存要声明的 sector 大小以及对应的抵押的资金。（资金就是 Filecoin 代币） AllocationTable：分配表保存了 pieces 和 sectors 和对应关系。 Orders：Filecoin 中的参与方想要提供服务和请求使用服务时，都会发起一个 order。客户端的order 称作 *bid order*，存储矿工和检索矿工的order 叫做 *ask order*。 Orderbook：订单记录保存了一系列的订单。  更详细的说明可以参考 Filecoin paper 的 4.</description>
+    </item>
     
     <item>
       <title>我从 Libra 学到了什么</title>

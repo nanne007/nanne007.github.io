@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>Filecoin 基本原理解读 | Give me five</title>
+    <meta name="DC.Title" content="Filecoin 基本原理解读">
+  
+
+  
+    <meta name="DC.Date" content="2019/12/12">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="就在几天前，Protocol Labs 启动了 Filecoin 测试网，预计2020年一季度上线主网。新闻一出来，当年这个红极一时的明星项目又引起圈内一阵反响。大家所熟知的 IPFS 也是由 Protocol Labs 主导开发，该协议已经稳定运行几年了。IPFS 是一个点对点的分布式文件系统，但是光有 IPFS 是不够的，缺少必要的激励机制，整个系统无法形成有效的闭环，构建在 IPFS 之上的 Filecoin 就是为了解决这一问题。它提供了一个供需市场，存储提供者和存储使用方可以通过竞价的模式去达成交易，最终，通过市场来调节存储的成本，使用方能够根据价格选择速度、冗余程度和成本。在这篇文章中，我们聊聊 Filecoin 是怎么做的。
+基本构造 在介绍具体的交互之前，先介绍 Filecoin 的几个关键概念。
+参与方 参与 Filecoin 协议的有客户端(Client)，存储矿工（Storage Miner），检索矿工（Retrieval Miner）。
+ 客户端需要 1. 付钱给存储旷工来存储自己的数据，2. 付钱给检索矿工来获取数据。 存储矿工向网络提供数据存储，保存来自客户端的数据，并不断的向链证明自己确实保存了客户的数据。 检索矿工向客户端提供数据获取的服务。  存储旷工和检索矿工组成了 Filecoin 的网络，并不断生成账本，构建 Filecoin 区块链。
+数据结构  Pieces：用户的数据可能会被分成多个 pieces，并且不同的 pieces 可能由不同的存储矿工保存。 Sectors：sector 本意是扇区，这里指代的是存储矿工节点上的一部分存储空间。存储矿工需要先向链声明自己的 sectors，然后才可以对外提供服务，将客户端的 pieces 存储在 sectors 中。 Pledge：存储矿工在向链声明自己的 sectors，还需要抵押一部分的资金，pledge 用来保存要声明的 sector 大小以及对应的抵押的资金。（资金就是 Filecoin 代币） AllocationTable：分配表保存了 pieces 和 sectors 和对应关系。 Orders：Filecoin 中的参与方想要提供服务和请求使用服务时，都会发起一个 order。客户端的order 称作 *bid order*，存储矿工和检索矿工的order 叫做 *ask order*。 Orderbook：订单记录保存了一系列的订单。  更详细的说明可以参考 Filecoin paper 的 4.">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/filecoin/">
+  
+
+  
+    <meta name="keywords" content="filecoin,blockchain,">
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>Filecoin 基本原理解读</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2019/12/12 
+    
+
+    
+</header>
+
+<article>
+
+
+<!-- # Filecoin 基本原理解读 -->
+
+<p>就在几天前，Protocol Labs 启动了 Filecoin 测试网，预计2020年一季度上线主网。新闻一出来，当年这个红极一时的明星项目又引起圈内一阵反响。大家所熟知的 IPFS 也是由 Protocol Labs 主导开发，该协议已经稳定运行几年了。IPFS 是一个点对点的分布式文件系统，但是光有 IPFS 是不够的，缺少必要的激励机制，整个系统无法形成有效的闭环，构建在 IPFS 之上的 Filecoin 就是为了解决这一问题。它提供了一个供需市场，存储提供者和存储使用方可以通过竞价的模式去达成交易，最终，通过市场来调节存储的成本，使用方能够根据价格选择速度、冗余程度和成本。在这篇文章中，我们聊聊 <a href="https://filecoin.io/filecoin.pdf">Filecoin</a> 是怎么做的。</p>
+
+<h2 id="基本构造">基本构造</h2>
+
+<p>在介绍具体的交互之前，先介绍 Filecoin 的几个关键概念。</p>
+
+<h3 id="参与方">参与方</h3>
+
+<p>参与 Filecoin 协议的有客户端(Client)，存储矿工（Storage Miner），检索矿工（Retrieval Miner）。</p>
+
+<ul>
+<li>客户端需要 1. 付钱给存储旷工来存储自己的数据，2. 付钱给检索矿工来获取数据。</li>
+<li>存储矿工向网络提供数据存储，保存来自客户端的数据，并不断的向链证明自己确实保存了客户的数据。</li>
+<li>检索矿工向客户端提供数据获取的服务。</li>
+</ul>
+
+<p>存储旷工和检索矿工组成了 Filecoin 的网络，并不断生成账本，构建 Filecoin 区块链。</p>
+
+<h3 id="数据结构">数据结构</h3>
+
+<ul>
+<li>Pieces：用户的数据可能会被分成多个 pieces，并且不同的 pieces 可能由不同的存储矿工保存。</li>
+<li>Sectors：sector 本意是扇区，这里指代的是存储矿工节点上的一部分存储空间。存储矿工需要先向链声明自己的 sectors，然后才可以对外提供服务，将客户端的 pieces 存储在 sectors 中。</li>
+<li>Pledge：存储矿工在向链声明自己的 sectors，还需要抵押一部分的资金，pledge 用来保存要声明的 sector 大小以及对应的抵押的资金。（资金就是 Filecoin 代币）</li>
+<li>AllocationTable：分配表保存了 pieces 和 sectors 和对应关系。</li>
+<li>Orders：Filecoin 中的参与方想要提供服务和请求使用服务时，都会发起一个 order。客户端的order 称作  *bid order*，存储矿工和检索矿工的order 叫做 *ask order*。</li>
+<li>Orderbook：订单记录保存了一系列的订单。</li>
+</ul>
+
+<p><img src="./images/data-structure-in-filecoin.png" alt="data-structure" /></p>
+
+<p>更详细的说明可以参考 <a href="https://filecoin.io/filecoin.pdf">Filecoin paper</a> 的 <em>4.2</em> 节。</p>
+
+<h2 id="供需市场">供需市场</h2>
+
+<p>Filecoin 网络中存在两个市场，Storage Market 和 Retrieval Market。这两个市场只是个抽象的概念。你可以把它们理解成电子商城，有人卖货，有人买货，有人的地方就有市场，但市场并没有实体存在。在 Storage Market 中，卖货是存储节点售卖自己的存储，买货是客户端付钱购买存储节点的存储。Retrieval Market 中，卖货就是检索节点售卖自己高速的数据供应能力，买货是客户端付钱查询节点数据。</p>
+
+<p>Storage Market 和 Retrieval Market 两者在概念上比较类似，但具体实现千差万别。比如说，Storage Market 中的 OrderBook 存储在链上，而 Retrieval Market 中的交易完全是链下交易，client 和 miner 在链下通过 Network 匹配需求，然后线下开支付通道完成付款。下图给出了两者的主要特征。本文着重在原理，具体细节留待后续文章分析。下文的介绍主要以 Storage Market 的流程为主。</p>
+
+<p><img src="images/market.png" alt="market" /></p>
+
+<h4 id="供给">供给</h4>
+
+<p>说到交易市场，必然先保证供给。在 Storage Market 中，存储能力由 Storage Miner（以下简称 miner） 提供。miner 在挂载好可用的存储（这里的存储不局限于本地磁盘）后，第一件事情就是调用 <code>PledgeSector</code> 提交一个交易到链上<strong>声明自己的可用存储</strong>，这个过程叫做 *Pledge*，你可以理解成 miner 把一份承诺书写到链上，承诺书上写明了 miner 要提供多大的存储空间，以及一定数量的保证金（<code>collateral</code>）。保证金用于后续 miner 作恶时所需的惩罚金。<em>Pledge</em> 交易会更新 <code>AllocTable</code> ，写入承诺书上的 sector。</p>
+
+<blockquote>
+<p>PledgeSector:</p>
+
+<ul>
+<li>输入：
+
+<ul>
+<li>当前的 <code>alloc table</code></li>
+<li>pledge 请求 <code>pledge</code></li>
+</ul></li>
+<li>输出：
+
+<ul>
+<li>新的 <code>allocTable'</code></li>
+</ul></li>
+</ul>
+</blockquote>
+
+<h4 id="生成订单">生成订单</h4>
+
+<p>Pledge 完成后，miner 就可以对外提供存储服务了。miner 生成 <em>ask order</em> ，里面标明以什么价格出售多少存储空间， 然后执行 <code>AddOrders</code> 交易把 order 写入到链上。</p>
+
+<p>上面是 miner 生成 ask order 的过程，ask orders 构成了存储市场上的供给侧。</p>
+
+<p>如果 client 想要把自己的数据存储到 miner 那里（也就是需求侧），也要往链上添加一个订单，叫做 <code>bid order</code>，订单里面标明了要存的数据大小，以及 client 愿意支付的金额（<code>fund</code>），可能还会有数据要保存多长时间，以及对 miner 的保证金（<code>collateral</code>）的最低要求。</p>
+
+<blockquote>
+<p>AddOrders</p>
+
+<ul>
+<li>输入：订单列表 O~1~ .. O~n~</li>
+<li>输出：bit <code>b</code>, 1 成功，0 失败</li>
+</ul>
+</blockquote>
+
+<h4 id="订单匹配">订单匹配</h4>
+
+<p>client 和 miner 把自己的 order 上链后，就可以调用 <code>MatchOrders</code> 来匹配对方的 order。具体的匹配算法，论文中没有做详细说明。暂时还没有看过这部分代码，这里我做一个不负责任的猜测，内部实现多种不同的匹配策略，client 和 miner 在做订单匹配的时候，可以指定使用哪一种匹配策略。有兴趣的可以去翻一下代码 <a href="https://github.com/filecoin-project/go-filecoin">go-filecoin</a> 或者 <a href="https://github.com/filecoin-project/lotus">lotus</a>。</p>
+
+<blockquote>
+<p>MatchOrders</p>
+
+<p>输入：</p>
+
+<ul>
+<li>当前的 OrderBook</li>
+<li>要匹配的订单 O^q^</li>
+</ul>
+
+<p>输出：匹配上的订单 O^1^ .. O^n^</p>
+</blockquote>
+
+<h4 id="签订合同">签订合同</h4>
+
+<p>当 client 发现自己的订单和 miner 的匹配上后，双方需要走 **签合同 **的流程。签合同需要处理两个事宜。</p>
+
+<p>一数据传输，client 端需要把自己的数据发送给 miner，miner 需要接收并保存 client 的数据。</p>
+
+<p>二，数据传输完成后， miner 生成一个 <code>deal order</code>（其中包含了用户数据的哈希值），签名后，发送给 client，client 收到后，也签名，然后提交到链上，表示合同已签订。</p>
+
+<p>在收到 <code>deal order</code> 后，链就更新 <code>allocTable</code>，标记 miner 的 sector 和 用户数据（哈希值）之间的关系。</p>
+
+<p>至此，一个完整的合同就达成了。</p>
+
+<p>关于 order 的详细定义可参考下图：</p>
+
+<p><img src="images/image-20191212210534607.png" alt="image-20191212210534607" /></p>
+
+<h2 id="履约">履约</h2>
+
+<p>但是，合同签完了，后续万一 miner 拒不执行合同，把 client 的数据（pieces）丢弃了，该怎么办？如何保证 miner 诚实的履行合同的职责？本章节介绍 filecoin 协议中的 <em>Seal</em> 和 <em>Prove</em> 操作，我称之为 <strong>履约</strong>。（ <em>PoRep</em> 和 *PoSt*）</p>
+
+<p>Miner 在和 client 签订完合同后，需要做两个事情。</p>
+
+<h4 id="seal">Seal</h4>
+
+<p>sector 填满了数据，miner 需要调用 <code>SealSector</code>  将 sector 密封起来，并将 seal 结果上链。该操作是为了证明 miner 确实将 sector 中的各个 client 的数据（pieces）都完整无缺的存储下来。</p>
+
+<blockquote>
+<p>SealSector:</p>
+
+<ul>
+<li>输入：
+
+<ul>
+<li>miner 的秘钥对 <code>M</code></li>
+<li>sector 索引标识 <code>j</code></li>
+<li>分配表 <code>allocTable</code></li>
+</ul></li>
+<li>输出：
+
+<ul>
+<li>π~seal~</li>
+<li>root hash <code>rt</code></li>
+</ul></li>
+</ul>
+</blockquote>
+
+<p>值得注意的是 SealSector 的输出 π~root~ 和 <code>rt</code> 是 Filecoin 存储证明 <em>PoRep</em> 中第一步操作（<code>PoRep.Setup</code>）的输出。<em>PoRep</em> 利用了 <a href="https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof"><em>zk-SNARKs</em></a> 技术，因此， SealSector 操作比较耗费计算。Setup 的数据就是 sector <code>j</code> 所存储的所有 clients 数据。</p>
+
+<h4 id="prove">Prove</h4>
+
+<p><em>Seal</em> 操作的结果证明了，miner 在某一时刻存储了 clients 的数据，但在这之后，miner 可能会直接将数据丢弃，欺骗客户。这就需要 miner 能够持续不断的证明自己存有正确的数据。这是通过 Filecoin 时空证明 <em>PoSt</em> 完成的。<em>PoSt</em> 要求 miner 在每个 epoch 都需要提交 sector 的 prove 到链上。这个 prove 通过 <code>PoSt.Prove</code> 生成。</p>
+
+<blockquote>
+<p>ProveSector:</p>
+
+<ul>
+<li>输入：
+
+<ul>
+<li>miner 的秘钥对 <code>M</code></li>
+<li>sector 索引标识 <code>j</code></li>
+<li>挑战值 <code>c</code></li>
+<li>时间参数 <code>t</code></li>
+</ul></li>
+<li>输出：证明 π~Post~</li>
+</ul>
+</blockquote>
+
+<p>和 Seal 不同的是，Prove 需要一个时间参数 <code>t</code>（比如，区块高度），<code>PoSt.Prove</code> 利用这个时间 t 来证明自己在 t 时刻，存储有 sector <code>j</code> 中的数据。和 Seal 类似的是， Prove 操作也比较耗费计算，Filecoin 中所谓的挖矿就是和这两个操作有关。每当 miner 提交了一份正确的 proof 到链上，链在下一次 epoch 做 check 时，会把来自client 订单中的 <em>fund</em> 按照比例付给 miner，直到 client 订单过期或者fund 使用完。</p>
+
+<p>关于 <code>PoRep</code> 和 <code>PoSt</code> ，说到底还是需要依靠 <a href="https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof">zk-SNARKs</a>，关于这一部分，大家有兴趣的可自行翻阅其他文献，这里就不班门弄斧了，推荐安比实验室写的<a href="https://github.com/sec-bit/learning-zkp/blob/master/zkp-resource-list.md">一系列文集</a>，比较通俗易懂。</p>
+
+<p>上面说的都是诚实 miner 的行为，假如 miner 作恶，没有定期提交 proof。那链在检查 allocTable 时，就会发现某个用户数据（piece）没有相对应的 miner proof，这个时候，前面提到 miner pledge 质押的保证金 (<code>collateral</code>) 就派上用场了。链会扣掉和 piece 成比例的保证金，返还给 client。</p>
+
+<h2 id="结语">结语</h2>
+
+<p>这篇文章介绍了 Filecoin 协议的基本原理，涉及了供需市场，订单，合同执行，以及最后的履约，试图以相对具象的概念向大家传达 Filecoin  paper 中展现的内容。当然，以上都是我的片面理解，如有任何概念上的误导，都归于我个人，一切以论文和源代码为主，也欢迎相关领域的朋友指正。</p>
+
+<p>事实上，论文中还有一部分内容本文没有涉及：共识。文中提到的 <code>AddOrders</code> , <code>Pledge</code>等等操作大部分都需要上链，而链需要 miner 共同维护，对上链的交易达成共识。Filecoin 用了哪种共识协议，PoW 还是 PoS？挖矿是怎么一回事？链的激励机制又是如何运作的？这一块的内容，我们留待下回分解。</p>
+
+</article>
+</main>
+
+    <footer>
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Dec 14 2019
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+
