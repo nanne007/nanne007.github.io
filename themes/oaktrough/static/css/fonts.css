@@ -5,17 +5,17 @@
 
 @font-face {
   font-family: BitterRegularFB1;
-  src: url(fonts/bitter.woff);
+  src: url(/fonts/bitter.woff);
 }
 
 @font-face {
   font-family: BitterRegularFB2;
-  src: url(../fonts/bitter.woff);
+  src: url(/fonts/bitter.woff);
 }
 
 @font-face {
   font-family: BitterRegularFB3;
-  src: url(../../fonts/bitter.woff);
+  src: url(/fonts/bitter.woff);
 }
 
 body {
