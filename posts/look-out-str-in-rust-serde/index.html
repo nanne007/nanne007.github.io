@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+    <title>serde 反序列化 str 引发的血案 | Give me five</title>
+    <meta name="DC.Title" content="serde 反序列化 str 引发的血案">
+  
+
+  
+    <meta name="DC.Date" content="2020/03/29">
+  
+
+  
+    <meta name="DC.Creator" content="Jiafeng Cao">
+  
+
+  
+    <meta name="DC.Language" content="en">
+  
+
+  
+    <meta name="DC.Description" content="serde 是 Rust 中一个被广泛使用的序列化框架。本文给出我最近遇到的一个反序列化的坑。
+区块链中，public key 展现出来的是一串字符串（无论用什么编码，提供给 human read 的总归是字符串）。 但是程序需要将这些字符串转换成语言内部表示的数据结构。
+libra 也是这样，它使用 serde 为 PublicKey 定制了一个反序列化方式。
+impl&amp;lt;&amp;#39;de&amp;gt;::serde::Deserialize&amp;lt;&amp;#39;de&amp;gt;for#name{fn deserialize&amp;lt;D&amp;gt;(deserializer: D)-&amp;gt; std::result::Result&amp;lt;Self,D::Error&amp;gt;whereD: ::serde::Deserializer&amp;lt;&amp;#39;de&amp;gt;,{ifdeserializer.is_human_readable(){letencoded_key=&amp;lt;&amp;amp;str&amp;gt;::deserialize(deserializer)?;ValidKeyStringExt::from_encoded_string(encoded_key).map_err(&amp;lt;D::Erroras::serde::de::Error&amp;gt;::custom)}else{// ignored code.... }}} 这段代码试图从 deserializer 中拿到一段 &amp;amp;&#39;de str，然后再从 &amp;amp;str 中生成 PublicKey。
+遇到的坑就是 从 deserializer 中拿 &amp;amp;&#39;de str 时，会报错 expect borrowed string。
+重点在于，只有当你用了某些类型的 deserializer，才会报错。
+下面这段代码是可以正常执行的。直接 plaintext =&amp;gt; publickey
+letorigin_text=&amp;#34;731fe437a8d3fbb25fa389307ac615e3a503e49be40e1b8cf9e5136fb44b9e5f&amp;#34;;letpublic_key: PublicKey=Deserialize::deserialize(origin_text).unwrap(); 但是 plaintext =&amp;gt; jsonvalue =&amp;gt; publickey ，从 jsonvalue 转换成 publickey 出现了问题。
+letorigin_text=&amp;#34;731fe437a8d3fbb25fa389307ac615e3a503e49be40e1b8cf9e5136fb44b9e5f&amp;#34;;letjson_value=serde_json::from_str(origin_text).unwrap();letpublic_key: PublicKey=Deserialize::deserialize(json_value).unwrap(); 问题就出在，无法从 Json::String(v) 反序列化出一个 &amp;amp;str。
+因为 json_value 在 Deserialize::deserialize(deserializer: D) 调用会将 deserializer move 进去，">
+  
+
+  
+    <meta name="DC.Identifier" content="/posts/look-out-str-in-rust-serde/">
+  
+
+  
+
+  
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/fonts.css" />
+</head>
+
+    <a class="skip-main" href="#main">Skip to main content</a>
+        <nav>
+      <h1> Give me five </h1>
+      <div>
+      
+      
+      
+      
+        <a href="../../" title="Home">home</a>
+      
+      
+        <a href="../../posts/" title="Posts">posts</a>
+      
+      
+        <a href="../../notes/" title="Notes">notes</a>
+      
+
+      
+      
+        <a href="../../index.xml" title="RSS">rss</a>
+      
+      </div>
+    </ul>
+  </nav>
+
+
+
+
+<main id="main">
+<header>
+    
+        <h1>serde 反序列化 str 引发的血案</h1>
+    
+
+    
+        
+            Jiafeng Cao
+        
+         2020/03/29 
+    
+
+    
+</header>
+
+<article>
+
+
+<p>serde 是 Rust 中一个被广泛使用的序列化框架。本文给出我最近遇到的一个反序列化的坑。</p>
+
+<p>区块链中，public key 展现出来的是一串字符串（无论用什么编码，提供给 human read 的总归是字符串）。
+但是程序需要将这些字符串转换成语言内部表示的数据结构。</p>
+
+<p>libra 也是这样，它使用 serde 为 PublicKey 定制了一个反序列化方式。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#888">        </span><span style="color:#fb660a;font-weight:bold">impl</span>&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;<span style="color:#888"> </span>::serde::Deserialize&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">for</span><span style="color:#888"> </span>#name<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">            </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">deserialize</span>&lt;D&gt;(deserializer: D)<span style="color:#888"> </span>-&gt; std::result::Result&lt;Self,<span style="color:#888"> </span>D::Error&gt;<span style="color:#888">
+</span><span style="color:#888">            </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">                </span>D: ::serde::Deserializer&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;,<span style="color:#888">
+</span><span style="color:#888">            </span>{<span style="color:#888">
+</span><span style="color:#888">                </span><span style="color:#fb660a;font-weight:bold">if</span><span style="color:#888"> </span>deserializer.is_human_readable()<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">                    </span><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>encoded_key<span style="color:#888"> </span>=<span style="color:#888"> </span>&lt;&amp;<span style="color:#cdcaa9;font-weight:bold">str</span>&gt;::deserialize(deserializer)?;<span style="color:#888">
+</span><span style="color:#888">                    </span>ValidKeyStringExt::from_encoded_string(encoded_key)<span style="color:#888">
+</span><span style="color:#888">                        </span>.map_err(&lt;D::Error<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">as</span><span style="color:#888"> </span>::serde::de::Error&gt;::custom)<span style="color:#888">
+</span><span style="color:#888">                </span>}<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">else</span><span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">                   </span><span style="color:#080;background-color:#0f140f;font-style:italic">// ignored code....
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#888">                </span>}<span style="color:#888">
+</span><span style="color:#888">            </span>}<span style="color:#888">
+</span><span style="color:#888">        </span>}<span style="color:#888">
+</span></code></pre></div>
+<p>这段代码试图从 <code>deserializer</code> 中拿到一段 <code>&amp;'de str</code>，然后再从 <code>&amp;str</code> 中生成 PublicKey。</p>
+
+<p>遇到的坑就是 <strong>从 <code>deserializer</code> 中拿 <code>&amp;'de str</code></strong> 时，会报错 <code>expect borrowed string</code>。</p>
+
+<p>重点在于，只有当你用了某些类型的 <code>deserializer</code>，才会报错。</p>
+
+<p>下面这段代码是可以正常执行的。直接 <em>plaintext =&gt; publickey</em></p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>origin_text<span style="color:#888"> </span>=<span style="color:#888"> </span><span style="color:#0086d2">&#34;731fe437a8d3fbb25fa389307ac615e3a503e49be40e1b8cf9e5136fb44b9e5f&#34;</span>;<span style="color:#888">
+</span><span style="color:#888"></span><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>public_key: PublicKey<span style="color:#888"> </span>=<span style="color:#888"> </span>Deserialize::deserialize(origin_text).unwrap();<span style="color:#888">
+</span></code></pre></div>
+<p>但是 <em>plaintext =&gt; jsonvalue =&gt; publickey</em> ，从 jsonvalue 转换成 publickey 出现了问题。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>origin_text<span style="color:#888"> </span>=<span style="color:#888"> </span><span style="color:#0086d2">&#34;731fe437a8d3fbb25fa389307ac615e3a503e49be40e1b8cf9e5136fb44b9e5f&#34;</span>;<span style="color:#888">
+</span><span style="color:#888"></span><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>json_value<span style="color:#888"> </span>=<span style="color:#888"> </span>serde_json::from_str(origin_text).unwrap();<span style="color:#888">
+</span><span style="color:#888"></span><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>public_key: PublicKey<span style="color:#888"> </span>=<span style="color:#888"> </span>Deserialize::deserialize(json_value).unwrap();<span style="color:#888">
+</span></code></pre></div>
+<p>问题就出在，无法从 <code>Json::String(v)</code> 反序列化出一个 <code>&amp;str</code>。</p>
+
+<p>因为 json_value 在 <code>Deserialize::deserialize(deserializer: D)</code> 调用会将 <code>deserializer</code> move 进去，</p>
+
+<p>调用完成之后，<code>deserializer</code> 不存在了，<code>Json::String(v)</code> 中的 <code>v</code> 也就没有了，那返回的 <code>&amp;str</code> 该引用哪一段内存块呢？</p>
+
+<p>反序列化时， serde_json 对 <code>&amp;str</code> 和 <code>String</code> 的处理方式一样，都是调用 <code>Visitor</code> 的 <code>visit_string</code> 方法，</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">deserialize_str</span>&lt;V&gt;(self,<span style="color:#888"> </span>visitor: V)<span style="color:#888"> </span>-&gt; Result&lt;V::Value,<span style="color:#888"> </span>Self::Error&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>V: Visitor&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span>self.deserialize_string(visitor)<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">deserialize_string</span>&lt;V&gt;(self,<span style="color:#888"> </span>visitor: V)<span style="color:#888"> </span>-&gt; Result&lt;V::Value,<span style="color:#888"> </span>Self::Error&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>V: Visitor&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span><span style="color:#fb660a;font-weight:bold">match</span><span style="color:#888"> </span>self<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">            </span>Value::String(v)<span style="color:#888"> </span>=&gt;<span style="color:#888"> </span>visitor.visit_string(v),<span style="color:#888">
+</span><span style="color:#888">            </span>_<span style="color:#888"> </span>=&gt;<span style="color:#888"> </span>Err(self.invalid_type(&amp;visitor)),<span style="color:#888">
+</span><span style="color:#888">        </span>}<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span></code></pre></div>
+<p>但是！两者的 visitor 不同。<code>&amp;str</code> 对应的 <code>Visitor</code> 是 <code>StrVisitor</code>。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#fb660a;font-weight:bold">struct</span> StrVisitor;<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888"></span><span style="color:#fb660a;font-weight:bold">impl</span>&lt;<span style="color:#ff0086;font-weight:bold">&#39;a</span>&gt;<span style="color:#888"> </span>Visitor&lt;<span style="color:#ff0086;font-weight:bold">&#39;a</span>&gt;<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">for</span><span style="color:#888"> </span>StrVisitor<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">type</span> Value<span style="color:#888"> </span>=<span style="color:#888"> </span>&amp;<span style="color:#ff0086;font-weight:bold">&#39;a</span><span style="color:#888"> </span><span style="color:#cdcaa9;font-weight:bold">str</span>;<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">expecting</span>(&amp;self,<span style="color:#888"> </span>formatter: <span style="color:#fb660a">&amp;</span>mut<span style="color:#888"> </span>fmt::Formatter)<span style="color:#888"> </span>-&gt; fmt::Result<span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">        </span>formatter.write_str(<span style="color:#0086d2">&#34;a borrowed string&#34;</span>)<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">visit_borrowed_str</span>&lt;E&gt;(self,<span style="color:#888"> </span>v: <span style="color:#fb660a">&amp;</span><span style="color:#ff0086;font-weight:bold">&#39;a</span><span style="color:#888"> </span><span style="color:#cdcaa9;font-weight:bold">str</span>)<span style="color:#888"> </span>-&gt; Result&lt;Self::Value,<span style="color:#888"> </span>E&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>E: Error,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span>Ok(v)<span style="color:#888"> </span><span style="color:#080;background-color:#0f140f;font-style:italic">// so easy
+</span><span style="color:#080;background-color:#0f140f;font-style:italic"></span><span style="color:#888">    </span>}<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">visit_borrowed_bytes</span>&lt;E&gt;(self,<span style="color:#888"> </span>v: <span style="color:#fb660a">&amp;</span><span style="color:#ff0086;font-weight:bold">&#39;a</span><span style="color:#888"> </span>[<span style="color:#cdcaa9;font-weight:bold">u8</span>])<span style="color:#888"> </span>-&gt; Result&lt;Self::Value,<span style="color:#888"> </span>E&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>E: Error,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span><span style="color:#cdcaa9;font-weight:bold">str</span>::from_utf8(v).map_err(|_|<span style="color:#888"> </span>Error::invalid_value(Unexpected::Bytes(v),<span style="color:#888"> </span>&amp;self))<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span><span style="color:#888"></span>}<span style="color:#888">
+</span><span style="color:#888">
+</span><span style="color:#888"></span><span style="color:#fb660a;font-weight:bold">impl</span>&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>: <span style="color:#ff0086;font-weight:bold">&#39;a</span>,<span style="color:#888"> </span><span style="color:#ff0086;font-weight:bold">&#39;a</span>&gt;<span style="color:#888"> </span>Deserialize&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;<span style="color:#888"> </span><span style="color:#fb660a;font-weight:bold">for</span><span style="color:#888"> </span>&amp;<span style="color:#ff0086;font-weight:bold">&#39;a</span><span style="color:#888"> </span><span style="color:#cdcaa9;font-weight:bold">str</span><span style="color:#888"> </span>{<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">deserialize</span>&lt;D&gt;(deserializer: D)<span style="color:#888"> </span>-&gt; Result&lt;Self,<span style="color:#888"> </span>D::Error&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>D: Deserializer&lt;<span style="color:#ff0086;font-weight:bold">&#39;de</span>&gt;,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span>deserializer.deserialize_str(StrVisitor)<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span><span style="color:#888"></span>}<span style="color:#888">
+</span></code></pre></div>
+<p><code>StrVisitor</code> 没有实现 <code>visit_string</code> 方法，使用 <code>Visitor</code> 的默认实现。而默认实现，就是直接报错。</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">visit_str</span>&lt;E&gt;(self,<span style="color:#888"> </span>v: <span style="color:#fb660a">&amp;</span><span style="color:#cdcaa9;font-weight:bold">str</span>)<span style="color:#888"> </span>-&gt; Result&lt;Self::Value,<span style="color:#888"> </span>E&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>E: Error,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span>Err(Error::invalid_type(Unexpected::Str(v),<span style="color:#888"> </span>&amp;self))<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">#[inline]</span><span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">#[cfg(any(feature = </span><span style="color:#0086d2">&#34;std&#34;</span><span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">, feature = </span><span style="color:#0086d2">&#34;alloc&#34;</span><span style="color:#ff0007;background-color:#0f140f;font-weight:bold;font-style:italic">))]</span><span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">fn</span> <span style="color:#ff0086;font-weight:bold">visit_string</span>&lt;E&gt;(self,<span style="color:#888"> </span>v: String)<span style="color:#888"> </span>-&gt; Result&lt;Self::Value,<span style="color:#888"> </span>E&gt;<span style="color:#888">
+</span><span style="color:#888">    </span><span style="color:#fb660a;font-weight:bold">where</span><span style="color:#888">
+</span><span style="color:#888">        </span>E: Error,<span style="color:#888">
+</span><span style="color:#888">    </span>{<span style="color:#888">
+</span><span style="color:#888">        </span>self.visit_str(&amp;v)<span style="color:#888">
+</span><span style="color:#888">    </span>}<span style="color:#888">
+</span></code></pre></div>
+<h2 id="解决办法">解决办法</h2>
+
+<p>这里的坑在于，实现 <code>Deserialize</code> 时，无法预知，<code>deserializer</code> 是否支持 <code>&amp;str</code>(&amp;[u8] 同理) 的反序列化。
+而我们想要的是，如果支持，就返回 *borrowed str*，如果不支持，返回*owned str*。
+而这，可以用 <code>Cow&lt;str&gt;</code> 实现。</p>
+
+<p>serde 本身对 <code>Cow&lt;T&gt;</code> 的 <code>Deserialize</code> 实现，是直接返回 <code>Cow::Owned</code>。</p>
+
+<p>但 serde 在实现 derive 时，考虑了 <code>str</code> 和 <code>[u8]</code> 两种特殊情形，专门提供了 <code>borrow_cow_str</code> 和 <code>borrow_cow_bytes</code> 两种方法，
+可以返回 <code>Cow::Borrowed</code> 数据。</p>
+
+<pre><code>#[cfg(any(feature = &quot;std&quot;, feature = &quot;alloc&quot;))]
+pub fn borrow_cow_str&lt;'de: 'a, 'a, D, R&gt;(deserializer: D) -&gt; Result&lt;R, D::Error&gt;
+where
+    D: Deserializer&lt;'de&gt;,
+    R: From&lt;Cow&lt;'a, str&gt;&gt;,
+{
+    struct CowStrVisitor;
+
+    impl&lt;'a&gt; Visitor&lt;'a&gt; for CowStrVisitor {
+        type Value = Cow&lt;'a, str&gt;;
+
+        fn expecting(&amp;self, formatter: &amp;mut fmt::Formatter) -&gt; fmt::Result {
+            formatter.write_str(&quot;a string&quot;)
+        }
+
+        fn visit_str&lt;E&gt;(self, v: &amp;str) -&gt; Result&lt;Self::Value, E&gt;
+        where
+            E: Error,
+        {
+            Ok(Cow::Owned(v.to_owned()))
+        }
+
+        fn visit_borrowed_str&lt;E&gt;(self, v: &amp;'a str) -&gt; Result&lt;Self::Value, E&gt;
+        where
+            E: Error,
+        {
+            Ok(Cow::Borrowed(v))
+        }
+
+        fn visit_string&lt;E&gt;(self, v: String) -&gt; Result&lt;Self::Value, E&gt;
+        where
+            E: Error,
+        {
+            Ok(Cow::Owned(v))
+        }
+
+        // ignored other code ...
+    }
+
+    deserializer.deserialize_str(CowStrVisitor).map(From::from)
+}
+
+</code></pre>
+
+<p>因此，实现 <code>&amp;str</code>  序列化时，最好使用上面这个方法。
+libra 实现可以改成：</p>
+<div class="highlight"><pre style="color:#fff;background-color:#111;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#fb660a;font-weight:bold">let</span><span style="color:#888"> </span>encoded_key: Cow&lt;<span style="color:#cdcaa9;font-weight:bold">str</span>&gt;<span style="color:#888"> </span>=<span style="color:#888"> </span>serde::private::borrow_cow_str(deserializer)?;<span style="color:#888">
+</span></code></pre></div>
+</article>
+</main>
+
+    <footer>
+    <hr>
+      
+  <link rel="stylesheet" href="../../css/vs.min.css">
+  <script src="../../js/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+  <script>
+    
+    let elements = document.getElementsByClassName("highlight");
+    for (let element_id = 0; element_id < elements.length; element_id++) {
+      const element = elements[element_id];
+      
+      element.firstChild.setAttribute("style", "");
+      
+      let language = element.firstChild.firstChild.getAttribute("data-lang");
+      if (language !== null) {
+          element.firstChild.firstChild.setAttribute("class", language);
+      }
+    }
+  </script>
+
+  <script>
+    const code = document.querySelectorAll("code");
+    [...code].forEach(el => el.textContent = el.textContent.replace(/^\n/,''));
+  </script>
+
+      <p>
+        Last updated Mar 29 2020
+      </p>
+      <p>
+        
+      </p>
+      <br>
+    </footer>
+  </body>
+</html>
+

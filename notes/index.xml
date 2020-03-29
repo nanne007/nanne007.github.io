@@ -6,10 +6,21 @@
     <description>Recent content in Notes on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 25 Sep 2019 20:43:04 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 28 Mar 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/notes/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Libra network actor 交互图</title>
+      <link>/notes/about_libra_network/</link>
+      <pubDate>Sat, 28 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/notes/about_libra_network/</guid>
+      <description>最近看了下 libp2p 的代码，用 libp2p 实现了 libra network 中的 rpc 协议，代码在这里。对 libp2p 算比较熟悉了。 今天又重新过了下 libra network 的代码。
+虽然它主要还是沿用 libp2p，但使用 actor model 来实现，更加 async/await，整个模型相比 libp2p 更加轻量。 相比 libp2p 通过各种 hook，libra network 通过 channel 来传递消息（也丧失了部分灵活性）。
+为了总结 actor 之间的关系，画了下面一张图。</description>
+    </item>
     
     <item>
       <title>Libra Move 采坑记</title>

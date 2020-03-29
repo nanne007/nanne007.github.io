@@ -3,12 +3,12 @@
 
 <head>
   
-    <title>Paper: A critique of snapshot isolation 笔记 | Give me five</title>
-    <meta name="DC.Title" content="Paper: A critique of snapshot isolation 笔记">
+    <title>Libra network actor 交互图 | Give me five</title>
+    <meta name="DC.Title" content="Libra network actor 交互图">
   
 
   
-    <meta name="DC.Date" content="2018/12/04">
+    <meta name="DC.Date" content="2020/03/28">
   
 
   
@@ -20,15 +20,15 @@
   
 
   
-    <meta name="DC.Description" content="write-si 的起源">
+    <meta name="DC.Description" content="最近看了下 libp2p 的代码，用 libp2p 实现了 libra network 中的 rpc 协议，代码在这里。对 libp2p 算比较熟悉了。 今天又重新过了下 libra network 的代码。
+虽然它主要还是沿用 libp2p，但使用 actor model 来实现，更加 async/await，整个模型相比 libp2p 更加轻量。 相比 libp2p 通过各种 hook，libra network 通过 channel 来传递消息（也丧失了部分灵活性）。
+为了总结 actor 之间的关系，画了下面一张图。">
   
 
   
-    <meta name="DC.Identifier" content="/notes/about_write_snapshot_isolation/">
+    <meta name="DC.Identifier" content="/notes/about_libra_network/">
   
 
-  
-    <meta name="keywords" content="database,snapshot-isolation,serializable,paper,">
   
 
   
@@ -70,54 +70,29 @@
 <main id="main">
 <header>
     
-        <h1>Paper: A critique of snapshot isolation 笔记</h1>
+        <h1>Libra network actor 交互图</h1>
     
 
     
         
             Jiafeng Cao
         
-         2018/12/04 
+         2020/03/28 
     
 
     
 </header>
 
 <article>
+<p>最近看了下 libp2p 的代码，用 libp2p 实现了 libra network 中的 rpc 协议，代码在<a href="https://github.com/nonsense2020/libp2p-rpc">这里</a>。对 libp2p 算比较熟悉了。
+今天又重新过了下 libra network 的代码。</p>
 
+<p>虽然它主要还是沿用 libp2p，但使用 actor model 来实现，更加 async/await，整个模型相比 libp2p 更加轻量。
+相比 libp2p 通过各种 hook，libra network 通过 channel 来传递消息（也丧失了部分灵活性）。</p>
 
-<h3 id="section-2">Section 2</h3>
+<p>为了总结 actor 之间的关系，画了下面一张图。</p>
 
-<ul>
-<li>both write to row r</li>
-<li>时间重叠：si &lt; cj, ci &gt; sj</li>
-</ul>
-
-<p>介绍了 SI 的两种实现方式：
-- 基于锁的实现，拿 percolator 举例。
-- 无锁的实现。没细看，跳过了。</p>
-
-<h3 id="section-3-serializablility">Section 3: Serializablility</h3>
-
-<p>首先说明了 SI 的问题：</p>
-
-<ul>
-<li>避免 Write-Write 冲突不足够实现 Serializablility。有 write skew 的问题。</li>
-<li>同时也不是实现 Serializablility 的必要条件。禁止了一些事实上是 Serializable 的操作。</li>
-</ul>
-
-<h4 id="section-4-read-write-vs-write-write">Section 4: Read-Write vs Write-Write</h4>
-
-<p>从 read-snapshot isolation 出发定义了 write-snapshot isolation：</p>
-
-<ul>
-<li>txn2 修改了 txn1 读的数据。</li>
-<li>s1 &lt; c2, c1 &gt; c2</li>
-</ul>
-
-<p>得出结论：
-- 避免 Read-Write 冲突可以实现 Serializablility。
-- 但同样也禁止了一些是 Serializable 的操作。</p>
+<p><img src="./images/libra_p2p_network.jpg" alt="libra network" /></p>
 
 </article>
 </main>

@@ -6,10 +6,28 @@
     <description>Recent content in Blog on Give me five</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 12 Dec 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 29 Mar 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>serde 反序列化 str 引发的血案</title>
+      <link>/posts/look-out-str-in-rust-serde/</link>
+      <pubDate>Sun, 29 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/look-out-str-in-rust-serde/</guid>
+      <description>serde 是 Rust 中一个被广泛使用的序列化框架。本文给出我最近遇到的一个反序列化的坑。
+区块链中，public key 展现出来的是一串字符串（无论用什么编码，提供给 human read 的总归是字符串）。 但是程序需要将这些字符串转换成语言内部表示的数据结构。
+libra 也是这样，它使用 serde 为 PublicKey 定制了一个反序列化方式。
+impl&amp;lt;&amp;#39;de&amp;gt;::serde::Deserialize&amp;lt;&amp;#39;de&amp;gt;for#name{fn deserialize&amp;lt;D&amp;gt;(deserializer: D)-&amp;gt; std::result::Result&amp;lt;Self,D::Error&amp;gt;whereD: ::serde::Deserializer&amp;lt;&amp;#39;de&amp;gt;,{ifdeserializer.is_human_readable(){letencoded_key=&amp;lt;&amp;amp;str&amp;gt;::deserialize(deserializer)?;ValidKeyStringExt::from_encoded_string(encoded_key).map_err(&amp;lt;D::Erroras::serde::de::Error&amp;gt;::custom)}else{// ignored code.... }}} 这段代码试图从 deserializer 中拿到一段 &amp;amp;&#39;de str，然后再从 &amp;amp;str 中生成 PublicKey。
+遇到的坑就是 从 deserializer 中拿 &amp;amp;&#39;de str 时，会报错 expect borrowed string。
+重点在于，只有当你用了某些类型的 deserializer，才会报错。
+下面这段代码是可以正常执行的。直接 plaintext =&amp;gt; publickey
+letorigin_text=&amp;#34;731fe437a8d3fbb25fa389307ac615e3a503e49be40e1b8cf9e5136fb44b9e5f&amp;#34;;letpublic_key: PublicKey=Deserialize::deserialize(origin_text).unwrap(); 但是 plaintext =&amp;gt; jsonvalue =&amp;gt; publickey ，从 jsonvalue 转换成 publickey 出现了问题。
+letorigin_text=&amp;#34;731fe437a8d3fbb25fa389307ac615e3a503e49be40e1b8cf9e5136fb44b9e5f&amp;#34;;letjson_value=serde_json::from_str(origin_text).unwrap();letpublic_key: PublicKey=Deserialize::deserialize(json_value).unwrap(); 问题就出在，无法从 Json::String(v) 反序列化出一个 &amp;amp;str。
+因为 json_value 在 Deserialize::deserialize(deserializer: D) 调用会将 deserializer move 进去，</description>
+    </item>
     
     <item>
       <title>Filecoin 基本原理解读</title>
