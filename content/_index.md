@@ -8,14 +8,13 @@ title: 主页
 ![A outline of my face.](/images/profile.jpg)
 {{< /figure >}}
 
-我是 lerencao，目前在杭州西溪路某金融科技公司写 Java 代码。
+我是 lerencao，目前在某 blockchain 公司 写 Rust 代码。
 
 前段时间在分布式存储如 HBase, TiDB 方向做事情。
-最近被当韭菜割了一把，在了解 blockchain 的东西，目前在研究 Nervos CKB，看过大部分 CKB-VM 的代码，以及部分 CKB 代码。
 
-另外，我是 Rust，Elixir 的粉丝，再之前，一直是 Ruby 的拥趸。
+另外，我是 Rust，Elixir 的粉丝。
 
-如果你也对上面的一些话题感兴趣，欢迎交流。你可以在 [GitHub](https://github.com/lerencao), [Weibo](https://weibo.com/1671499682) 找到我。
+如果你也对上面的一些话题感兴趣，欢迎交流。你可以在 [GitHub](https://github.com/nonsense2020), [Weibo](https://weibo.com/1671499682) 找到我。
 
 或者直接通过 `d2VjaGF0OiBmcmllbmRmdW4=` 联系我。
 
